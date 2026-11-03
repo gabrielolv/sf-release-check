@@ -1,0 +1,9 @@
+output/
+data/
+.sf/
+.sfdx/
+.env
+**/__pycache__/
+Release Note/
+*.pdf
+*.docx

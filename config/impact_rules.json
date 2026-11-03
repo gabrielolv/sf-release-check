@@ -1,0 +1,61 @@
+{
+  "_doc": "Severity phrases (case-insensitive regex) used by the deterministic prefilter. The AI agent makes the final Low/Medium/High decision; these only rank and shortlist.",
+  "severity": {
+    "high": [
+      "\\bretire(d|ment|s)?\\b",
+      "\\bis being retired\\b",
+      "end of (life|support)",
+      "no longer (supported|available|works?|be able)",
+      "\\bcan no longer\\b",
+      "\\b(will be|is being|are being|are|is) removed\\b",
+      "\\bdeprecat",
+      "\\bbreaking change",
+      "\\bblocked\\b",
+      "\\bwill fail\\b",
+      "encounter an error",
+      "\\bis enforced\\b",
+      "\\benforced in (this release|winter|spring|summer)",
+      "\\bmust (update|migrate|assign|enable|replace|change|upgrade)\\b",
+      "\\bmandatory\\b",
+      "\\bdiscontinued\\b",
+      "stops? working"
+    ],
+    "medium": [
+      "enabled by default",
+      "on by default",
+      "\\bby default\\b",
+      "automatically (enabled|applied|turned on|updated|migrated)",
+      "\\bnow requires?\\b",
+      "\\bchanged\\b",
+      "behavior (change|changes|changed)",
+      "\\brequired to\\b",
+      "\\bmigrat(e|ion)\\b",
+      "\\bapi version \\d",
+      "\\bsecurity\\b",
+      "\\bpermissions?\\b",
+      "\\breplac(e|es|ed)\\b",
+      "\\bpostponed\\b",
+      "for all users",
+      "\\bno longer\\b",
+      "\\brenamed\\b"
+    ],
+    "opt_in": [
+      "from setup",
+      "\\bto enable\\b",
+      "\\bturn on\\b",
+      "\\b(pilot|beta)\\b",
+      "\\bcontact (your )?(salesforce )?account",
+      "\\badd-on\\b",
+      "requires? (an? )?(additional )?license",
+      "\\bavailable for purchase\\b"
+    ]
+  },
+  "release_update_groups": {
+    "Enforced with This Release": "high",
+    "Scheduled To Be Enforced Before": "high",
+    "Scheduled to Be Enforced in": "medium",
+    "Canceled Updates": "low"
+  },
+  "editions": ["Essentials", "Starter", "Pro Suite", "Professional", "Enterprise", "Performance", "Unlimited", "Developer", "Einstein 1", "Agentforce 1"],
+  "generic_code_tokens": ["System.debug", "Test.startTest", "Test.stopTest", "e.g", "i.e", "Salesforce.com"]
+}

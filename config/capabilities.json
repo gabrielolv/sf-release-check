@@ -1,0 +1,911 @@
+{
+ "_doc": "Maps org evidence (detect) to release-note vocabulary (areas = product area / heading path segments, keywords = phrases in title or text). A capability is 'present' when any detect rule matches. Edit freely - no code changes needed.",
+ "capabilities": [
+  {
+   "id": "core_platform",
+   "label": "Core Platform & Lightning Experience",
+   "detect": {
+    "always": true
+   },
+   "areas": [
+    "Salesforce Overall",
+    "Customization",
+    "Release Updates"
+   ],
+   "keywords": [
+    "Lightning Experience",
+    "Setup",
+    "record page",
+    "list view",
+    "Salesforce org",
+    "all editions"
+   ]
+  },
+  {
+   "id": "apex",
+   "label": "Apex code",
+   "detect": {
+    "metadata": {
+     "ApexClass": 1,
+     "ApexTrigger": 1
+    }
+   },
+   "areas": [
+    "Apex"
+   ],
+   "keywords": [
+    "Apex",
+    "trigger",
+    "Database.",
+    "System.",
+    "SOQL",
+    "DML",
+    "governor limit",
+    "Queueable",
+    "Batch Apex",
+    "@AuraEnabled",
+    "test class"
+   ]
+  },
+  {
+   "id": "lwc",
+   "label": "Lightning Web Components",
+   "detect": {
+    "metadata": {
+     "LightningComponentBundle": 1
+    }
+   },
+   "areas": [
+    "Lightning Components"
+   ],
+   "keywords": [
+    "Lightning web component",
+    "LWC",
+    "lightning-",
+    "lightning/",
+    "Lightning Web Security",
+    "LWS",
+    "Lightning Data Service",
+    "wire adapter"
+   ]
+  },
+  {
+   "id": "aura",
+   "label": "Aura components",
+   "detect": {
+    "metadata": {
+     "AuraDefinitionBundle": 1
+    }
+   },
+   "areas": [],
+   "keywords": [
+    "Aura component",
+    "Aura",
+    "Lightning Locker",
+    "aura:"
+   ]
+  },
+  {
+   "id": "visualforce",
+   "label": "Visualforce",
+   "detect": {
+    "metadata": {
+     "ApexPage": 1,
+     "ApexComponent": 1
+    }
+   },
+   "areas": [
+    "Visualforce"
+   ],
+   "keywords": [
+    "Visualforce",
+    "apex:page",
+    "renderAs"
+   ]
+  },
+  {
+   "id": "flow",
+   "label": "Salesforce Flow",
+   "detect": {
+    "metadata": {
+     "Flow": 1
+    }
+   },
+   "areas": [
+    "Salesforce Flow",
+    "Automation",
+    "Flow Builder"
+   ],
+   "keywords": [
+    "Flow",
+    "flow",
+    "Flow Builder",
+    "screen flow",
+    "record-triggered",
+    "autolaunched",
+    "Flow Orchestration"
+   ]
+  },
+  {
+   "id": "legacy_automation",
+   "label": "Workflow Rules / Process Builder",
+   "detect": {
+    "metadata": {
+     "WorkflowRule": 1
+    },
+    "flow_types": [
+     "Workflow"
+    ]
+   },
+   "areas": [],
+   "keywords": [
+    "Workflow Rule",
+    "Process Builder",
+    "workflow rules",
+    "processes"
+   ]
+  },
+  {
+   "id": "api_integrations",
+   "label": "API integrations",
+   "detect": {
+    "metadata": {
+     "ConnectedApplication": 1,
+     "NamedCredential": 1,
+     "ExternalClientApplication": 1,
+     "RemoteSiteSetting": 1
+    },
+    "login_types": [
+     "Remote Access",
+     "OAuth",
+     "SOAP",
+     "Partner Product"
+    ]
+   },
+   "areas": [
+    "API",
+    "REST API",
+    "SOAP API",
+    "Bulk API",
+    "Integration",
+    "Connect REST API"
+   ],
+   "keywords": [
+    "API version",
+    "REST API",
+    "SOAP API",
+    "Bulk API",
+    "Metadata API",
+    "Tooling API",
+    "Connected App",
+    "External Client App",
+    "Named Credential",
+    "External Credential",
+    "OAuth",
+    "login()",
+    "integration user",
+    "callout",
+    "Pub/Sub API",
+    "Change Data Capture",
+    "Platform Event"
+   ]
+  },
+  {
+   "id": "identity_security",
+   "label": "Identity, SSO & security",
+   "detect": {
+    "always": true
+   },
+   "areas": [
+    "Security, Identity, and Privacy",
+    "Security and Identity",
+    "Identity",
+    "Authentication"
+   ],
+   "keywords": [
+    "MFA",
+    "multi-factor",
+    "single sign-on",
+    "SSO",
+    "SAML",
+    "session",
+    "My Domain",
+    "password",
+    "permission",
+    "profile",
+    "Shield",
+    "encryption",
+    "certificate",
+    "CSP",
+    "Trusted URL",
+    "clickjack",
+    "OAuth"
+   ]
+  },
+  {
+   "id": "permissions_sharing",
+   "label": "Permissions & sharing model",
+   "detect": {
+    "always": true
+   },
+   "areas": [
+    "Permissions and Sharing",
+    "Sharing"
+   ],
+   "keywords": [
+    "permission set",
+    "permission set group",
+    "sharing rule",
+    "sharing recalculation",
+    "role hierarchy",
+    "profile",
+    "user permission",
+    "View All",
+    "Modify All",
+    "restriction rule"
+   ]
+  },
+  {
+   "id": "experience_cloud",
+   "label": "Experience Cloud sites / portals",
+   "detect": {
+    "metadata": {
+     "Network": 1,
+     "Site": 1
+    },
+    "licenses": [
+     "Customer Community",
+     "Partner Community",
+     "Guest",
+     "External Apps",
+     "Customer Portal"
+    ]
+   },
+   "areas": [
+    "Experience Cloud",
+    "Experience Builder",
+    "Digital Experiences"
+   ],
+   "keywords": [
+    "Experience Cloud",
+    "Experience Builder",
+    "guest user",
+    "LWR",
+    "Aura site",
+    "external user",
+    "Experience Cloud site",
+    "Digital Experiences"
+   ]
+  },
+  {
+   "id": "sales_cloud",
+   "label": "Sales Cloud",
+   "detect": {
+    "records": [
+     "Opportunity",
+     "Lead",
+     "Quote",
+     "Forecast"
+    ]
+   },
+   "areas": [
+    "Sales"
+   ],
+   "keywords": [
+    "Opportunity",
+    "Lead",
+    "Forecast",
+    "Pipeline",
+    "Sales Engagement",
+    "Einstein Activity Capture",
+    "Territory",
+    "Quote"
+   ]
+  },
+  {
+   "id": "service_cloud",
+   "label": "Service Cloud (Cases)",
+   "detect": {
+    "records": [
+     "Case",
+     "Entitlement",
+     "CaseComment"
+    ]
+   },
+   "areas": [
+    "Service"
+   ],
+   "keywords": [
+    "Case",
+    "Service Console",
+    "Entitlement",
+    "Milestone",
+    "Macro",
+    "Quick Text",
+    "Service Cloud",
+    "email-to-case"
+   ]
+  },
+  {
+   "id": "knowledge",
+   "label": "Salesforce Knowledge",
+   "detect": {
+    "objects": [
+     "Knowledge__kav"
+    ],
+    "records": [
+     "Knowledge__kav"
+    ]
+   },
+   "areas": [
+    "Knowledge"
+   ],
+   "keywords": [
+    "Knowledge",
+    "knowledge article"
+   ]
+  },
+  {
+   "id": "omni_channel",
+   "label": "Omni-Channel routing",
+   "detect": {
+    "records": [
+     "AgentWork",
+     "ServiceChannel",
+     "PendingServiceRouting"
+    ],
+    "metadata": {
+     "Queue": 1
+    }
+   },
+   "areas": [
+    "Omni-Channel",
+    "Routing"
+   ],
+   "keywords": [
+    "Omni-Channel",
+    "routing",
+    "queue",
+    "presence status",
+    "skills-based"
+   ]
+  },
+  {
+   "id": "messaging_voice",
+   "label": "Messaging, Chat & Voice",
+   "detect": {
+    "records": [
+     "MessagingSession",
+     "LiveChatTranscript",
+     "VoiceCall"
+    ]
+   },
+   "areas": [
+    "Messaging",
+    "Agentforce Contact Center",
+    "Service Cloud Voice",
+    "Partner Contact Center"
+   ],
+   "keywords": [
+    "Messaging",
+    "Enhanced Chat",
+    "Live Agent",
+    "Chat",
+    "Voice",
+    "Contact Center",
+    "WhatsApp",
+    "SMS"
+   ]
+  },
+  {
+   "id": "field_service",
+   "label": "Field Service",
+   "detect": {
+    "records": [
+     "ServiceAppointment",
+     "WorkOrder",
+     "ServiceResource"
+    ],
+    "packages": [
+     "FSL"
+    ]
+   },
+   "areas": [
+    "Field Service"
+   ],
+   "keywords": [
+    "Field Service",
+    "Service Appointment",
+    "Work Order",
+    "Dispatcher Console",
+    "Service Resource",
+    "FSL"
+   ]
+  },
+  {
+   "id": "commerce",
+   "label": "Commerce",
+   "detect": {
+    "records": [
+     "WebStore",
+     "WebCart"
+    ],
+    "objects": [
+     "WebStore"
+    ]
+   },
+   "areas": [
+    "Commerce",
+    "B2B Commerce",
+    "B2C Commerce",
+    "Salesforce Order Management"
+   ],
+   "keywords": [
+    "Commerce",
+    "storefront",
+    "WebStore",
+    "cart",
+    "checkout",
+    "B2B",
+    "B2C"
+   ]
+  },
+  {
+   "id": "cpq_revenue",
+   "label": "CPQ / Revenue Cloud",
+   "detect": {
+    "packages": [
+     "SBQQ",
+     "blng"
+    ],
+    "records": [
+     "Contract",
+     "Order",
+     "ProductSellingModel"
+    ]
+   },
+   "areas": [
+    "Revenue Management",
+    "Revenue Cloud"
+   ],
+   "keywords": [
+    "CPQ",
+    "Revenue Cloud",
+    "Billing",
+    "Product Catalog",
+    "pricing",
+    "Quote",
+    "Contract",
+    "Order"
+   ]
+  },
+  {
+   "id": "marketing",
+   "label": "Marketing (Campaigns / MC / Account Engagement)",
+   "detect": {
+    "records": [
+     "Campaign",
+     "CampaignMember"
+    ],
+    "packages": [
+     "pi",
+     "et4ae5"
+    ]
+   },
+   "areas": [
+    "Marketing"
+   ],
+   "keywords": [
+    "Campaign",
+    "Marketing Cloud",
+    "Account Engagement",
+    "Pardot",
+    "Journey"
+   ]
+  },
+  {
+   "id": "analytics",
+   "label": "Reports & Dashboards",
+   "detect": {
+    "metadata": {
+     "Report": 1,
+     "Dashboard": 1
+    }
+   },
+   "areas": [
+    "Reports and Dashboards",
+    "Lightning Reports and Dashboards"
+   ],
+   "keywords": [
+    "report",
+    "dashboard",
+    "report type",
+    "Lightning report builder",
+    "joined report",
+    "report subscription"
+   ]
+  },
+  {
+   "id": "crm_analytics_tableau",
+   "label": "CRM Analytics / Tableau",
+   "detect": {
+    "licenses": [
+     "CRM Analytics",
+     "Analytics Cloud",
+     "Tableau",
+     "Einstein Analytics"
+    ],
+    "objects": [
+     "WaveAutoInstallRequest"
+    ]
+   },
+   "areas": [
+    "CRM Analytics",
+    "Tableau",
+    "Tableau Next",
+    "Tableau Cloud",
+    "Analytics"
+   ],
+   "keywords": [
+    "CRM Analytics",
+    "Tableau",
+    "Tableau Next",
+    "Einstein Discovery",
+    "semantic model",
+    "Concierge"
+   ]
+  },
+  {
+   "id": "agentforce_ai",
+   "label": "Agentforce & Generative AI",
+   "detect": {
+    "metadata": {
+     "BotDefinition": 1,
+     "GenAiPlannerDefinition": 1,
+     "GenAiPromptTemplate": 1
+    },
+    "licenses": [
+     "Einstein",
+     "Agentforce"
+    ]
+   },
+   "areas": [
+    "Agentforce and Generative AI",
+    "AIforce",
+    "Einstein"
+   ],
+   "keywords": [
+    "Agentforce",
+    "Einstein",
+    "prompt template",
+    "Copilot",
+    "generative AI",
+    "Agent Builder",
+    "bot",
+    "Prompt Builder"
+   ]
+  },
+  {
+   "id": "data_cloud",
+   "label": "Data 360 (Data Cloud)",
+   "detect": {
+    "licenses": [
+     "Data Cloud",
+     "Data 360",
+     "CDP"
+    ],
+    "objects": [
+     "DataStream"
+    ]
+   },
+   "areas": [
+    "Data 360"
+   ],
+   "keywords": [
+    "Data 360",
+    "Data Cloud",
+    "data stream",
+    "data model object",
+    "DMO",
+    "calculated insight"
+   ]
+  },
+  {
+   "id": "industries",
+   "label": "Industry clouds (OmniStudio / Vlocity)",
+   "detect": {
+    "packages": [
+     "vlocity_cmt",
+     "vlocity_ins",
+     "vlocity_ps",
+     "omnistudio",
+     "HealthCloudGA",
+     "FinServ"
+    ],
+    "objects": [
+     "OmniProcess"
+    ]
+   },
+   "areas": [
+    "Industries",
+    "OmniStudio"
+   ],
+   "keywords": [
+    "OmniStudio",
+    "OmniScript",
+    "Integration Procedure",
+    "FlexCard",
+    "Data Mapper",
+    "DataRaptor",
+    "Vlocity"
+   ]
+  },
+  {
+   "id": "health_cloud",
+   "label": "Health Cloud",
+   "detect": {
+    "packages": [
+     "HealthCloudGA"
+    ],
+    "licenses": [
+     "Health Cloud"
+    ],
+    "objects": [
+     "CareProgram",
+     "HealthcareProvider"
+    ]
+   },
+   "areas": [
+    "Health"
+   ],
+   "keywords": [
+    "Health Cloud",
+    "care plan",
+    "patient",
+    "Care Program",
+    "provider"
+   ]
+  },
+  {
+   "id": "public_sector",
+   "label": "Public Sector Solutions",
+   "detect": {
+    "licenses": [
+     "Public Sector"
+    ],
+    "objects": [
+     "IndividualApplication",
+     "BusinessLicenseApplication"
+    ]
+   },
+   "areas": [
+    "Public Sector"
+   ],
+   "keywords": [
+    "Public Sector",
+    "license and permit",
+    "benefit management",
+    "grants",
+    "IndividualApplication",
+    "inspection"
+   ]
+  },
+  {
+   "id": "financial_services",
+   "label": "Financial Services Cloud",
+   "detect": {
+    "packages": [
+     "FinServ"
+    ],
+    "licenses": [
+     "Financial Services"
+    ]
+   },
+   "areas": [
+    "Financial Services"
+   ],
+   "keywords": [
+    "Financial Services Cloud",
+    "financial account",
+    "household"
+   ]
+  },
+  {
+   "id": "nonprofit_education",
+   "label": "Nonprofit / Education Cloud",
+   "detect": {
+    "packages": [
+     "npsp",
+     "hed"
+    ],
+    "licenses": [
+     "Nonprofit",
+     "Education"
+    ]
+   },
+   "areas": [
+    "Nonprofit",
+    "Education"
+   ],
+   "keywords": [
+    "Nonprofit",
+    "NPSP",
+    "Education Cloud",
+    "EDA",
+    "fundraising"
+   ]
+  },
+  {
+   "id": "mobile",
+   "label": "Salesforce Mobile App",
+   "detect": {
+    "login_types": [
+     "Application"
+    ],
+    "always": true
+   },
+   "areas": [
+    "Mobile",
+    "Salesforce Mobile App",
+    "Mobile Publisher"
+   ],
+   "keywords": [
+    "Salesforce mobile app",
+    "mobile",
+    "iOS",
+    "Android",
+    "Mobile Publisher",
+    "branded app"
+   ]
+  },
+  {
+   "id": "files_content",
+   "label": "Files & Salesforce CMS",
+   "detect": {
+    "records": [
+     "ContentVersion",
+     "ContentDocument"
+    ]
+   },
+   "areas": [
+    "Files",
+    "Salesforce CMS"
+   ],
+   "keywords": [
+    "Files",
+    "ContentVersion",
+    "ContentDocument",
+    "attachment",
+    "CMS"
+   ]
+  },
+  {
+   "id": "email",
+   "label": "Email (templates, services, deliverability)",
+   "detect": {
+    "metadata": {
+     "EmailTemplate": 1,
+     "EmailServicesFunction": 1
+    },
+    "records": [
+     "EmailMessage"
+    ]
+   },
+   "areas": [
+    "Email",
+    "Email, Calendar, and Integrations"
+   ],
+   "keywords": [
+    "email",
+    "Email template",
+    "deliverability",
+    "DKIM",
+    "Email Services",
+    "Outlook",
+    "Gmail"
+   ]
+  },
+  {
+   "id": "devops",
+   "label": "Deployment & DevOps tooling",
+   "detect": {
+    "always": true
+   },
+   "areas": [
+    "Deployment",
+    "Development",
+    "Platform Development Tools",
+    "Packaging",
+    "Sandbox and Scratch Orgs"
+   ],
+   "keywords": [
+    "sandbox",
+    "scratch org",
+    "Salesforce CLI",
+    "change set",
+    "DevOps Center",
+    "package",
+    "Code Builder",
+    "Metadata API",
+    "deploy"
+   ]
+  },
+  {
+   "id": "platform_events",
+   "label": "Platform Events / CDC",
+   "detect": {
+    "metadata": {
+     "PlatformEventChannel": 1
+    },
+    "objects": [
+     "EventBusSubscriber"
+    ]
+   },
+   "areas": [
+    "Event Monitoring"
+   ],
+   "keywords": [
+    "Platform Event",
+    "Change Data Capture",
+    "event bus",
+    "Pub/Sub",
+    "Event Relay"
+   ]
+  },
+  {
+   "id": "salesforce_connect",
+   "label": "Salesforce Connect / external objects",
+   "detect": {
+    "objects": [
+     "ExternalDataSource"
+    ]
+   },
+   "areas": [
+    "Salesforce Connect"
+   ],
+   "keywords": [
+    "Salesforce Connect",
+    "external object",
+    "OData",
+    "cross-org adapter"
+   ]
+  },
+  {
+   "id": "slack",
+   "label": "Slack integrations",
+   "detect": {
+    "licenses": [
+     "Slack"
+    ]
+   },
+   "areas": [
+    "Slack Integrations"
+   ],
+   "keywords": [
+    "Slack"
+   ]
+  },
+  {
+   "id": "scheduler",
+   "label": "Salesforce Scheduler",
+   "detect": {
+    "records": [
+     "ServiceTerritory",
+     "WorkType"
+    ],
+    "licenses": [
+     "Lightning Scheduler",
+     "Salesforce Scheduler"
+    ]
+   },
+   "areas": [
+    "Salesforce Scheduler"
+   ],
+   "keywords": [
+    "Salesforce Scheduler",
+    "appointment",
+    "Lightning Scheduler"
+   ]
+  }
+ ]
+}

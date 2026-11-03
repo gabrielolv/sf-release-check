@@ -1,0 +1,17 @@
+# Run artefacts contain org metadata and source code - share only report/ files deliberately
+output/
+.sf/
+.sfdx/
+__pycache__/
+*.pyc
+.claude/settings.local.json
+
+# Release notes PDFs are large; each user downloads the current one
+Release Note/*.pdf
+Release Note/*.docx
+
+# Docker / web app data and secrets
+data/
+.env
+# Network-specific corporate root certificates (see certs/README.md)
+certs/*.crt

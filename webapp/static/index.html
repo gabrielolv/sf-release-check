@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release Impact Check</title>
+<link rel="stylesheet" href="/static/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230b5cab'/><path d='M9 17l5 5 9-11' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-row">
+    <div>
+      <h1>Salesforce Release Impact Check</h1>
+      <p class="muted">Compare your org with the next Salesforce release and generate the impact documentation.</p>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner" class="banner" hidden></div>
+
+  <!-- 1. Salesforce -->
+  <section class="step" id="step-sf">
+    <div class="step-head"><span class="num">1</span><h2>Log in to Salesforce</h2><span class="state" id="sf-state"></span></div>
+    <div class="step-body">
+      <form id="sf-login" action="/oauth/start" method="get" class="grid">
+        <label>Environment
+          <select name="env" id="sf-env">
+            <option value="sandbox">Sandbox (test.salesforce.com)</option>
+            <option value="production">Production / Developer Edition (login.salesforce.com)</option>
+            <option value="custom">Custom domain (My Domain)</option>
+          </select>
+        </label>
+        <label id="sf-domain-wrap" hidden>My Domain
+          <input name="domain" id="sf-domain" placeholder="acme--uat.sandbox.my.salesforce.com" autocomplete="off">
+        </label>
+        <label>API version
+          <select name="api" id="sf-api"></select>
+        </label>
+        <div class="actions"><button class="primary" type="submit">Log in with Salesforce</button></div>
+        <p class="hint full">You are sent to the Salesforce login page (MFA and SSO work as usual), then back here.
+          The tool only <b>reads</b> metadata and configuration. Nothing is changed in the org.
+          Tokens stay in this app's memory and are discarded when it stops.</p>
+      </form>
+      <div id="sf-connected" hidden>
+        <dl class="kv" id="sf-info"></dl>
+        <div class="actions"><button id="sf-logout" class="ghost" type="button">Log out / switch org</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Claude -->
+  <section class="step locked" id="step-claude">
+    <div class="step-head"><span class="num">2</span><h2>Connect Claude</h2><span class="state" id="cl-state"></span></div>
+    <div class="step-body">
+      <div id="cl-connected" hidden>
+        <dl class="kv" id="cl-info"></dl>
+        <div class="actions"><button class="ghost" type="button" id="cl-clear">Disconnect / switch</button></div>
+      </div>
+      <div id="cl-choose">
+        <div class="tabs" role="tablist">
+          <button type="button" class="tab on" data-tab="account" role="tab">Claude account</button>
+          <button type="button" class="tab" data-tab="api" role="tab">Claude API key</button>
+        </div>
+        <form id="cl-account" class="grid tab-panel" data-panel="account">
+          <ol class="steps-list full">
+            <li>On your computer, open a terminal where Claude Code is installed and run <code>claude setup-token</code>.</li>
+            <li>Sign in with your Claude account in the browser that opens. This can be your company's Team or
+              Enterprise account (for example the partner account), Pro or Max.</li>
+            <li>Copy the token it prints (it starts with <code>sk-ant-oat</code>) and paste it here.</li>
+          </ol>
+          <label class="full">Claude account token
+            <input type="password" id="cl-token" placeholder="sk-ant-oat01-..." autocomplete="off" spellcheck="false">
+          </label>
+          <div class="actions"><button class="primary" type="submit">Connect and verify</button></div>
+          <p class="hint full" id="cl-account-hint">The analysis runs on Claude Code, the official Claude client, and counts
+            against your Claude plan's usage limits. There is no API bill. The token is kept in memory only. Your Claude
+            admin may need to allow Claude Code for your seat.</p>
+        </form>
+        <form id="cl-form" class="grid tab-panel" data-panel="api" hidden>
+          <label class="full">Anthropic API key
+            <input type="password" id="cl-key" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+          </label>
+          <div class="actions"><button class="primary" type="submit">Save and verify</button></div>
+          <p class="hint full">Pay-per-use key from console.anthropic.com (or your organization's Console workspace).
+            It is kept in memory for this browser session only.</p>
+        </form>
+        <p class="hint">Either way, org metadata and unmanaged code excerpts are sent to Claude, so check your client's
+          data and AI policy.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Release notes -->
+  <section class="step locked" id="step-notes">
+    <div class="step-head"><span class="num">3</span><h2>Release notes</h2><span class="state" id="rn-state"></span></div>
+    <div class="step-body">
+      <label class="drop" id="drop">
+        <input type="file" id="rn-file" accept=".pdf,.docx" hidden>
+        <span class="drop-title">Drop the release notes here or <u>browse</u></span>
+        <span class="muted">PDF (help.salesforce.com &rsaquo; Release Notes &rsaquo; Download PDF) or Word .docx, up to 200 MB</span>
+      </label>
+      <div class="progress" id="rn-progress" hidden><div class="bar"><i id="rn-bar"></i></div><span id="rn-msg"></span></div>
+      <dl class="kv" id="rn-info" hidden></dl>
+    </div>
+  </section>
+
+  <!-- 4. Analysis -->
+  <section class="step locked" id="step-run">
+    <div class="step-head"><span class="num">4</span><h2>Analysis</h2><span class="state" id="run-state"></span></div>
+    <div class="step-body">
+      <form id="run-form" class="grid">
+        <label>Claude model
+          <select id="run-model"></select>
+        </label>
+        <label>Spending cap (USD)
+          <input type="number" id="run-budget" value="30" min="1" max="1000" step="1">
+        </label>
+        <label>Parallel batches
+          <input type="number" id="run-parallel" value="4" min="1" max="8">
+          <span class="hint">How many batches Claude reviews at the same time. It changes only how long the run takes,
+            not the tokens or cost: the batches are the same either way. Higher values hit rate limits sooner (API key)
+            or use your plan's usage window faster (Claude account). Lower it if you see rate-limit errors.</span>
+        </label>
+        <label class="check"><input type="checkbox" id="run-source" checked> Include unmanaged source code (Apex, VF, LWC, Aura)</label>
+        <label class="check"><input type="checkbox" id="run-noai"> Rule-based only (no AI, no cost, less accurate)</label>
+        <div class="actions"><button class="primary" type="submit" id="run-start">Start analysis</button></div>
+      </form>
+      <div id="run-live" hidden>
+        <div class="run-meta" id="run-meta"></div>
+        <ol class="stages" id="stages"></ol>
+        <div class="progress" id="ai-progress" hidden><div class="bar"><i id="ai-bar"></i></div><span id="ai-msg"></span></div>
+        <details class="log" open><summary>Activity log</summary><pre id="log"></pre></details>
+        <div class="actions run-actions"><button class="danger" id="run-cancel" type="button">Cancel</button>
+          <button class="ghost" id="run-new" type="button" hidden>New analysis</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Documentation -->
+  <section class="step locked" id="step-docs">
+    <div class="step-head"><span class="num">5</span><h2>Documentation</h2><span class="state" id="doc-state"></span></div>
+    <div class="step-body">
+      <div id="doc-summary"></div>
+      <div class="doc-grid">
+        <div class="doc-card">
+          <h3>Technical document</h3>
+          <p class="muted">For developers and architects: every High and Medium item with evidence, affected
+            components, actions, test notes, developer task list, release updates, org profile, method.</p>
+          <div class="actions"><button class="primary" data-doc="technical" data-fmt="docx">Word</button>
+            <button class="primary" data-doc="technical" data-fmt="pdf">PDF</button></div>
+        </div>
+        <div class="doc-card">
+          <h3>Non-technical document</h3>
+          <p class="muted">For managers, PM and PO: verdict, top risks, key dates, decisions needed, user-facing
+            changes, communication needs, effort overview and readiness plan. No code.</p>
+          <div class="actions"><button class="primary" data-doc="business" data-fmt="docx">Word</button>
+            <button class="primary" data-doc="business" data-fmt="pdf">PDF</button></div>
+        </div>
+      </div>
+      <p class="extras" id="doc-extras"></p>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section class="history">
+    <h2>Previous analyses</h2>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Org</th><th>Release</th><th>Status</th><th>High / Med / Low</th><th></th></tr></thead>
+      <tbody id="runs"></tbody></table></div>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+services:
+  release-check:
+    # Prebuilt image from GitHub: `docker compose pull`. To build from this folder instead: `docker compose up -d --build`.
+    image: ghcr.io/gabrielolv/sf-release-check:latest
+    build: .
+    container_name: sf-release-impact-check
+    ports:
+      # Port 1717 is required: it is the callback of the Salesforce CLI connected app used for "Log in with Salesforce".
+      # Bound to 127.0.0.1 so the app is reachable only from this machine.
+      - "127.0.0.1:1717:1717"
+    volumes:
+      - ./data:/data            # analyses, documents, uploaded release notes
+      - ./certs:/certs:ro       # optional company root CA(s) for HTTPS-inspecting networks - see certs/README.md
+    env_file:
+      - path: .env              # optional - see .env.example
+        required: false
+    restart: unless-stopped

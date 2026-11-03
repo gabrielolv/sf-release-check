@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root{--bg:#f6f7f9;--panel:#fff;--ink:#16181d;--muted:#5c6370;--line:#e2e5ea;--accent:#0b5cab;
+--high:#b42318;--high-bg:#fde8e7;--med:#a15c00;--med-bg:#fff4dc;--low:#1d7a43;--low-bg:#e3f4ea;--na:#5c6370;--na-bg:#eef0f3}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121418;--panel:#1b1e24;--ink:#e8eaee;--muted:#9aa2ae;
+--line:#2c313a;--accent:#6ba8ff;--high:#ff8a80;--high-bg:#3a1d1c;--med:#ffc061;--med-bg:#3a2c12;--low:#6fd39a;--low-bg:#163223;--na:#9aa2ae;--na-bg:#262a31}}
+:root[data-theme=dark]{--bg:#121418;--panel:#1b1e24;--ink:#e8eaee;--muted:#9aa2ae;--line:#2c313a;--accent:#6ba8ff;
+--high:#ff8a80;--high-bg:#3a1d1c;--med:#ffc061;--med-bg:#3a2c12;--low:#6fd39a;--low-bg:#163223;--na:#9aa2ae;--na-bg:#262a31}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:22px 16px 0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+h1{margin:0 0 4px;font-size:24px;letter-spacing:-.01em}
+h2{font-size:18px;margin:28px 0 10px}
+h3{font-size:15px;margin:18px 0 6px}
+.sub{color:var(--muted);font-size:13.5px}
+nav{display:flex;gap:2px;margin-top:16px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:10px 14px;font:inherit;cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--ink);border-color:var(--accent);font-weight:600}
+main{padding:20px 0 60px}
+section{display:none}section.on{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card .n{font-size:30px;font-weight:650;line-height:1.1;font-variant-numeric:tabular-nums}
+.card .l{color:var(--muted);font-size:13px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-top:14px}
+.verdict{font-size:17px;font-weight:600}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.High{color:var(--high);background:var(--high-bg)}.Medium{color:var(--med);background:var(--med-bg)}
+.Low{color:var(--low);background:var(--low-bg)}.Not.Applicable,.NA{color:var(--na);background:var(--na-bg)}
+.n.High,.n.Medium,.n.Low,.n.NA{background:none}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--na-bg);min-width:120px}
+.bar i{display:block}.bar .h{background:var(--high)}.bar .m{background:var(--med)}.bar .l{background:var(--low)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.filters input,.filters select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.filters input{flex:1;min-width:200px}
+.feat{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+.feat summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;gap:10px;align-items:baseline}
+.feat summary::-webkit-details-marker{display:none}
+.feat summary .t{flex:1;font-weight:550}
+.feat summary .a{color:var(--muted);font-size:12.5px;white-space:nowrap}
+.feat .body{padding:0 14px 14px;border-top:1px solid var(--line)}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;margin-top:10px;font-size:14px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+ul,ol{margin:4px 0;padding-left:20px}
+code{font-family:Consolas,ui-monospace,monospace;font-size:.92em;background:var(--na-bg);padding:0 4px;border-radius:4px}
+.muted{color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.footer{color:var(--muted);font-size:12.5px;margin-top:30px}
+#theme{float:right;background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:4px 10px;cursor:pointer;font:inherit;font-size:12.5px}
+@media (max-width:720px){.two{grid-template-columns:1fr}.kv{grid-template-columns:1fr}.feat summary{flex-wrap:wrap}}
+@media print{nav,#theme,.filters{display:none}section{display:block!important;break-before:page}header{border:0}
+.feat{break-inside:avoid}details{display:block}details>.body{display:block}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <button id="theme" type="button">Theme</button>
+  <h1 id="title"></h1>
+  <div class="sub" id="subtitle"></div>
+  <nav id="tabs"></nav>
+</div></header>
+<main class="wrap" id="main"></main>
+<script id="report-data" type="application/json">/*__REPORT_DATA__*/null</script>
+<script>
+(function(){
+const D = JSON.parse(document.getElementById('report-data').textContent);
+const S = D.summary || {}, A = S.audiences || {};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const md = s => esc(s).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+  .split(/\n{2,}/).map(p => '<p>'+p.replace(/\n/g,'<br>')+'</p>').join('');
+const pill = i => `<span class="pill ${i==='Not Applicable'?'NA':esc(i)}">${esc(i)}</span>`;
+const list = (xs, ordered) => xs && xs.length ? `<${ordered?'ol':'ul'}>${xs.map(x=>`<li>${md(x).replace(/^<p>|<\/p>$/g,'')}</li>`).join('')}</${ordered?'ol':'ul'}>` : '<p class="muted">None.</p>';
+const byId = Object.fromEntries(D.features.map(f => [f.id, f]));
+const C = D.counts;
+
+document.getElementById('title').textContent = `${D.release} — Release Impact Assessment`;
+document.getElementById('subtitle').innerHTML =
+  `Org <b>${esc(D.org.name)}</b> (<code>${esc(D.org.alias)}</code>) · ${esc(D.org.edition)}${D.org.sandbox?' sandbox':''} · ${esc(D.org.instance||'')} · API v${esc(D.org.api_version)} · generated ${esc(D.generated)}`;
+
+const tabs = [
+  ['overview','Overview'],['product','Product (PM/PO)'],['arch','Architecture'],['dev','Developers'],
+  ['all','All changes'],['org','Org profile'],['method','Method']];
+const nav = document.getElementById('tabs'), main = document.getElementById('main');
+tabs.forEach(([id,label],i) => {
+  const b = document.createElement('button'); b.textContent = label; b.dataset.t = id; if(!i) b.className='on';
+  b.onclick = () => { nav.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    main.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===id));
+    try{ localStorage.setItem('rc-tab', id) }catch(e){} };
+  nav.appendChild(b);
+});
+
+const featCard = f => `<details class="feat"><summary>${pill(f.impact)}<span class="t">${esc(f.title)}</span>
+  <span class="a">${esc(f.area)} · p.${esc(f.page)}</span></summary><div class="body">
+  ${f.summary?`<p>${esc(f.summary)}</p>`:''}
+  <dl class="kv">
+   ${f.rationale?`<dt>Why for this org</dt><dd>${md(f.rationale)}</dd>`:''}
+   ${f.actions&&f.actions.length?`<dt>Actions</dt><dd>${list(f.actions,true)}</dd>`:''}
+   ${f.affected_components&&f.affected_components.length?`<dt>Affected</dt><dd>${f.affected_components.map(x=>`<code>${esc(x)}</code>`).join(' ')}</dd>`:''}
+   ${f.owner_roles&&f.owner_roles.length?`<dt>Owners</dt><dd>${esc(f.owner_roles.join(', '))}</dd>`:''}
+   ${f.effort?`<dt>Effort</dt><dd>${esc(f.effort)}</dd>`:''}
+   ${f.deadline?`<dt>Deadline</dt><dd>${esc(f.deadline)}</dd>`:''}
+   ${f.release_update_group?`<dt>Release update</dt><dd>${esc(f.release_update_group)}</dd>`:''}
+   ${f.when?`<dt>Availability</dt><dd>${esc(f.when)}</dd>`:''}
+   ${f.test_notes?`<dt>Test notes</dt><dd>${esc(f.test_notes)}</dd>`:''}
+   <dt>Confidence</dt><dd>${esc(f.confidence||'')}${f.ai_reviewed?'':' · <span class="muted">not AI-reviewed (rule-based rating)</span>'}</dd>
+   <dt>Reference</dt><dd>${esc((f.path||[]).join(' › '))} · <code>${esc(f.id)}</code></dd>
+  </dl></div></details>`;
+const featList = ids => ids.map(i=>byId[i]).filter(Boolean).map(featCard).join('') || '<p class="muted">None.</p>';
+
+// ---- Overview (Managers)
+const pct = (n) => D.total ? (100*n/D.total).toFixed(1) : 0;
+const areaRows = D.areas.filter(a=>a.High+a.Medium+a.Low).map(a => {
+  const t = a.High+a.Medium+a.Low+a['Not Applicable'];
+  return `<tr><td>${esc(a.area)}</td><td class="num">${a.High}</td><td class="num">${a.Medium}</td><td class="num">${a.Low}</td>
+  <td class="num muted">${a['Not Applicable']}</td><td><div class="bar"><i class="h" style="width:${100*a.High/t}%"></i><i class="m" style="width:${100*a.Medium/t}%"></i><i class="l" style="width:${100*a.Low/t}%"></i></div></td></tr>`}).join('');
+const high = D.features.filter(f=>f.impact==='High');
+main.insertAdjacentHTML('beforeend', `<section id="overview" class="on">
+ <div class="cards">
+  <div class="card"><div class="n" style="color:var(--high)">${C.High}</div><div class="l">High — action before upgrade</div></div>
+  <div class="card"><div class="n" style="color:var(--med)">${C.Medium}</div><div class="l">Medium — test / plan</div></div>
+  <div class="card"><div class="n" style="color:var(--low)">${C.Low}</div><div class="l">Low — optional / informational</div></div>
+  <div class="card"><div class="n" style="color:var(--na)">${C['Not Applicable']}</div><div class="l">Not applicable to this org</div></div>
+ </div>
+ ${S.headline?`<div class="panel"><div class="verdict">${S.overall_risk?pill(S.overall_risk)+' ':''}${esc(S.headline)}</div></div>`:''}
+ ${S.executive_summary?`<h2>Executive summary</h2><div class="panel">${md(S.executive_summary)}</div>`:''}
+ ${A.managers&&A.managers.decisions_needed&&A.managers.decisions_needed.length?`<h2>Decisions needed</h2><div class="panel">${list(A.managers.decisions_needed)}</div>`:''}
+ ${S.top_risks&&S.top_risks.length?`<h2>Top risks</h2><div class="panel" style="overflow-x:auto"><table><thead><tr><th>Risk</th><th>Impact</th><th>Owner</th><th>Deadline</th><th>Mitigation</th></tr></thead><tbody>
+   ${S.top_risks.map(r=>`<tr><td><b>${esc(r.title)}</b><div class="muted">${esc(r.why||'')}</div></td><td>${pill(r.impact||'High')}</td><td>${esc(r.owner||'')}</td><td>${esc(r.deadline||'')}</td><td>${esc(r.mitigation||'')}</td></tr>`).join('')}</tbody></table></div>`:''}
+ ${S.key_dates&&S.key_dates.length?`<h2>Key dates</h2><div class="panel"><table><tbody>${S.key_dates.map(d=>`<tr><td style="width:170px"><b>${esc(d.date)}</b></td><td>${esc(d.event)}</td><td class="muted">${esc(d.source||'')}</td></tr>`).join('')}</tbody></table></div>`:''}
+ ${S.plan&&S.plan.length?`<h2>Readiness plan</h2><div class="two">${S.plan.map(p=>`<div class="panel" style="margin:0"><h3 style="margin-top:0">${esc(p.phase)}</h3><div class="muted">${esc(p.when||'')}</div>${list(p.activities)}</div>`).join('')}</div>`:''}
+ <h2>Impact by product area</h2><div class="panel" style="overflow-x:auto"><table><thead><tr><th>Area</th><th>High</th><th>Medium</th><th>Low</th><th>N/A</th><th>Mix</th></tr></thead><tbody>${areaRows}</tbody></table></div>
+ <h2>High-impact items (${high.length})</h2>${featList(high.map(f=>f.id))}
+</section>`);
+
+// ---- Product
+const P = A.pm_po || {};
+const userFacing = D.features.filter(f=>(f.audiences||[]).includes('PM/PO') && f.impact!=='Not Applicable');
+main.insertAdjacentHTML('beforeend', `<section id="product">
+ ${P.summary?`<div class="panel">${md(P.summary)}</div>`:''}
+ <div class="two">
+  <div><h2>User-facing changes</h2><div class="panel">${list(P.user_facing_changes)}</div></div>
+  <div><h2>Communication & training</h2><div class="panel">${list(P.communication_needs)}</div></div>
+ </div>
+ <h2>Opportunities for the backlog</h2><div class="panel">${list(P.opportunities)}</div>
+ <h2>Changes tagged for PM/PO (${userFacing.length})</h2>${featList(userFacing.map(f=>f.id))}
+</section>`);
+
+// ---- Architecture
+const R = A.architects || {};
+const archF = D.features.filter(f=>(f.audiences||[]).includes('Architects') && ['High','Medium'].includes(f.impact));
+main.insertAdjacentHTML('beforeend', `<section id="arch">
+ ${R.summary?`<div class="panel">${md(R.summary)}</div>`:''}
+ <h2>Architecture considerations</h2><div class="panel">${list(R.considerations)}</div>
+ <h2>High / Medium items for architects (${archF.length})</h2>${featList(archF.map(f=>f.id))}
+</section>`);
+
+// ---- Developers
+const V = A.developers || {};
+const devF = D.features.filter(f=>(f.audiences||[]).includes('Developers') && ['High','Medium'].includes(f.impact));
+main.insertAdjacentHTML('beforeend', `<section id="dev">
+ ${V.summary?`<div class="panel">${md(V.summary)}</div>`:''}
+ <h2>Task list</h2><div class="panel" style="overflow-x:auto"><table><thead><tr><th>Component</th><th>Task</th><th>From</th></tr></thead><tbody>
+ ${(V.tasks||[]).map(t=>`<tr><td><b>${esc(t.component)}</b></td><td>${md(t.task).replace(/^<p>|<\/p>$/g,'')}</td><td>${(t.feature_ids||[]).map(i=>byId[i]?`<span title="${esc(byId[i].title)}"><code>${esc(i)}</code></span>`:'').join(' ')}</td></tr>`).join('')||'<tr><td colspan=3 class="muted">No tasks listed.</td></tr>'}
+ </tbody></table></div>
+ <h2>High / Medium items for developers (${devF.length})</h2>${featList(devF.map(f=>f.id))}
+</section>`);
+
+// ---- All changes
+const areas = [...new Set(D.features.map(f=>f.area))].sort();
+main.insertAdjacentHTML('beforeend', `<section id="all">
+ <div class="filters">
+  <input id="q" type="search" placeholder="Search title, rationale, component...">
+  <select id="fi"><option value="">All impacts</option><option>High</option><option>Medium</option><option>Low</option><option>Not Applicable</option></select>
+  <select id="fa"><option value="">All areas</option>${areas.map(a=>`<option>${esc(a)}</option>`).join('')}</select>
+  <select id="fu"><option value="">All audiences</option><option>Developers</option><option>Architects</option><option>PM/PO</option><option>Managers</option></select>
+  <select id="fr"><option value="">Any type</option><option value="ru">Release updates only</option></select>
+ </div><div class="muted" id="cnt"></div><div id="list"></div></section>`);
+const order = {'High':0,'Medium':1,'Low':2,'Not Applicable':3};
+const sorted = [...D.features].sort((a,b)=>order[a.impact]-order[b.impact]||a.area.localeCompare(b.area));
+function draw(){
+  const q = document.getElementById('q').value.toLowerCase(), fi = document.getElementById('fi').value,
+        fa = document.getElementById('fa').value, fu = document.getElementById('fu').value, fr = document.getElementById('fr').value;
+  const xs = sorted.filter(f => (!fi||f.impact===fi) && (!fa||f.area===fa) && (!fu||(f.audiences||[]).includes(fu))
+    && (!fr||f.is_release_update) && (!q || [f.title,f.summary,f.rationale,(f.affected_components||[]).join(' '),f.id].join(' ').toLowerCase().includes(q)));
+  document.getElementById('cnt').textContent = `${xs.length} of ${D.total} features`;
+  document.getElementById('list').innerHTML = xs.slice(0,400).map(featCard).join('') + (xs.length>400?'<p class="muted">Showing first 400 — refine the filters.</p>':'');
+}
+['q','fi','fa','fu','fr'].forEach(id=>document.getElementById(id).addEventListener('input',draw));
+document.getElementById('fi').value = 'High'; draw();
+
+// ---- Org profile
+main.insertAdjacentHTML('beforeend', `<section id="org">
+ <div class="panel"><dl class="kv" style="margin:0"><dt>Org</dt><dd>${esc(D.org.name)} · <code>${esc(D.org.alias)}</code></dd>
+ <dt>URL</dt><dd>${esc(D.org.url)}</dd><dt>Edition</dt><dd>${esc(D.org.edition)}${D.org.sandbox?' (sandbox)':''}</dd>
+ <dt>Inventory taken</dt><dd>${esc(D.org.collected_at)}</dd></dl></div>
+ <div class="two"><div><h2>Capabilities</h2><div class="panel"><table><tbody>
+ ${D.capabilities.map(c=>`<tr><td>${c.present?'<b>'+esc(c.label)+'</b>':'<span class="muted">'+esc(c.label)+'</span>'}</td><td class="muted" style="font-size:13px">${c.present?esc(c.evidence.join('; ')):'not detected'}</td></tr>`).join('')}
+ </tbody></table></div></div>
+ <div><h2>Metadata inventory</h2><div class="panel"><table><tbody>${Object.entries(D.metadata).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num">${v.toLocaleString()}</td></tr>`).join('')}</tbody></table></div></div></div>
+</section>`);
+
+// ---- Method
+main.insertAdjacentHTML('beforeend', `<section id="method"><div class="panel">
+ <h3 style="margin-top:0">How this assessment was produced</h3>
+ <ol><li><b>Release notes</b> (${esc(D.source_pdf||'PDF')}) parsed into ${D.total} features (changelogs, highlight recaps and availability matrices excluded).</li>
+ <li><b>Org inventory</b> collected read-only via the Salesforce CLI: licenses, packages, record counts, metadata and API versions, login types, unmanaged source code.</li>
+ <li><b>Rule-based pre-assessment</b> matched every feature to the org's capabilities and code, and flagged severity signals (retirements, enforced release updates, default-on changes).</li>
+ <li><b>AI review</b> (Claude, ${D.ai_reviewed} features) confirmed or corrected each relevant rating against the evidence and wrote the rationale, actions, owners and audience summaries.</li></ol>
+ <h3>Impact levels</h3><table><tbody>
+ <tr><td>${pill('High')}</td><td>Breaking, mandatory or security change on something this org uses, with a hard date. Must be handled before the production upgrade.</td></tr>
+ <tr><td>${pill('Medium')}</td><td>Existing behavior changes or work is required (default-on change, future enforcement, deprecation). Test in the preview sandbox, communicate, plan.</td></tr>
+ <tr><td>${pill('Low')}</td><td>Optional or additive change in an area the org uses. No action required; potential opportunity.</td></tr>
+ <tr><td>${pill('Not Applicable')}</td><td>Product, license or edition not present in this org.</td></tr></tbody></table>
+ ${S.assumptions_limitations&&S.assumptions_limitations.length?`<h3>Assumptions & limitations</h3>${list(S.assumptions_limitations)}`:''}
+ <p class="muted">AI-generated content: verify High items before acting. Ratings reflect the org state at inventory time.</p>
+</div></section>`);
+
+try{ const t = localStorage.getItem('rc-tab'); if(t){ const b = nav.querySelector(`[data-t="${t}"]`); b && b.click(); } }catch(e){}
+document.getElementById('theme').onclick = () => { const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark'; };
+})();
+</script>
+</body>
+</html>
