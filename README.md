@@ -1,5 +1,7 @@
 # Salesforce Release Impact Check
 
+![Salesforce Release Impact Check](docs/social-preview.png)
+
 [![Publish Docker image](https://github.com/gabrielolv/sf-release-check/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/gabrielolv/sf-release-check/actions/workflows/docker-publish.yml)
 
 Find out what the next Salesforce release means for **your** org before it lands.

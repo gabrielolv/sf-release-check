@@ -1,0 +1,43 @@
+<!doctype html>
+<!-- Source of docs/social-preview.png (1280x640, GitHub repo social preview). Re-render with headless Chrome/Edge:
+     msedge --headless --screenshot=docs/social-preview.png --window-size=1280,640 docs/social-preview.html -->
+<html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1280px;height:640px;overflow:hidden}
+body{font-family:"Segoe UI",Arial,sans-serif;color:#e8edf5;
+  background:radial-gradient(900px 500px at 85% 10%,#0b5cab55,transparent 60%),
+             radial-gradient(700px 400px at 0% 100%,#1b96ff33,transparent 60%),#0d1520;
+  padding:56px 72px 52px;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:14px;font-size:24px;color:#9fb3c8;letter-spacing:.3px}
+.cloud{width:46px;height:32px}
+h1{font-size:70px;line-height:1.05;font-weight:700;margin-top:26px;letter-spacing:-1px}
+h1 span{color:#1b96ff}
+p.sub{font-size:27px;line-height:1.4;color:#b8c7d9;margin-top:20px;max-width:1120px}
+.levels{display:flex;gap:16px;margin-top:34px}
+.lv{border-radius:14px;padding:14px 26px;font-size:26px;font-weight:600;display:flex;align-items:center;gap:12px}
+.lv i{width:14px;height:14px;border-radius:50%;display:inline-block}
+.h{background:#3a1518;color:#ff8a8a}.h i{background:#ff5d5d}
+.m{background:#3a2a10;color:#ffc46b}.m i{background:#ffab2e}
+.l{background:#12301c;color:#7fe0a0}.l i{background:#3ccf73}
+.na{background:#1f2733;color:#9fb0c3}.na i{background:#7d8ea3}
+.foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-size:22px;color:#8ea3ba}
+.chips{display:flex;gap:10px}
+.chip{border:1px solid #2c3e52;border-radius:999px;padding:7px 16px;background:#111c29}
+.repo{font-family:Consolas,monospace;color:#c9d6e5}
+</style></head><body>
+  <div class="top">
+    <svg class="cloud" viewBox="0 0 46 32" aria-hidden="true"><path fill="#1b96ff" d="M19 4a9 9 0 0 1 7 3.4A7.5 7.5 0 0 1 37 11a8 8 0 0 1 1 15.9H9.5A7.5 7.5 0 0 1 7.6 12.2 9 9 0 0 1 19 4z"/></svg>
+    Salesforce release readiness
+  </div>
+  <h1>Salesforce Release<br><span>Impact Check</span></h1>
+  <p class="sub">Rates every change in the next Salesforce release for <b>your</b> org, with evidence from its metadata,
+    code and usage, and writes the technical and business documentation.</p>
+  <div class="levels">
+    <div class="lv h"><i></i>High</div><div class="lv m"><i></i>Medium</div>
+    <div class="lv l"><i></i>Low</div><div class="lv na"><i></i>Not applicable</div>
+  </div>
+  <div class="foot">
+    <div class="chips"><span class="chip">Claude AI</span><span class="chip">Docker</span><span class="chip">Read-only</span><span class="chip">Word &amp; PDF</span></div>
+    <div class="repo">github.com/gabrielolv/sf-release-check</div>
+  </div>
+</body></html>
