@@ -111,21 +111,25 @@
   <section class="step locked" id="step-run">
     <div class="step-head"><span class="num">4</span><h2>Analysis</h2><span class="state" id="run-state"></span></div>
     <div class="step-body">
-      <form id="run-form" class="grid">
-        <label>Claude model
-          <select id="run-model"></select>
-        </label>
-        <label>Spending cap (USD)
-          <input type="number" id="run-budget" value="30" min="1" max="1000" step="1">
-        </label>
-        <label>Parallel batches
-          <input type="number" id="run-parallel" value="4" min="1" max="8">
-          <span class="hint">How many batches Claude reviews at the same time. It changes only how long the run takes,
-            not the tokens or cost: the batches are the same either way. Higher values hit rate limits sooner (API key)
-            or use your plan's usage window faster (Claude account). Lower it if you see rate-limit errors.</span>
-        </label>
-        <label class="check"><input type="checkbox" id="run-source" checked> Include unmanaged source code (Apex, VF, LWC, Aura)</label>
-        <label class="check"><input type="checkbox" id="run-noai"> Rule-based only (no AI, no cost, less accurate)</label>
+      <form id="run-form" class="run-grid">
+        <div class="run-col">
+          <label>Claude model
+            <select id="run-model"></select>
+          </label>
+          <label>Parallel batches
+            <input type="number" id="run-parallel" value="4" min="1" max="8">
+            <span class="hint">How many batches Claude reviews at the same time. It changes only how long the run takes,
+              not the tokens or cost: the batches are the same either way. Higher values hit rate limits sooner (API key)
+              or use your plan's usage window faster (Claude account). Lower it if you see rate-limit errors.</span>
+          </label>
+        </div>
+        <div class="run-col">
+          <label>Spending cap (USD)
+            <input type="number" id="run-budget" value="30" min="1" max="1000" step="1">
+          </label>
+          <label class="check"><input type="checkbox" id="run-source" checked> Include unmanaged source code (Apex, VF, LWC, Aura)</label>
+          <label class="check"><input type="checkbox" id="run-noai"> Rule-based only (no AI, no cost, less accurate)</label>
+        </div>
         <div class="actions"><button class="primary" type="submit" id="run-start">Start analysis</button></div>
       </form>
       <div id="run-live" hidden>
