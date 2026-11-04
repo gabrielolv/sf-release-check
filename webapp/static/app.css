@@ -24,8 +24,11 @@ h1{font-size:21px;margin:0}h2{font-size:16px;margin:0}h3{font-size:15px;margin:0
 .step.locked{opacity:.55}.step.locked .step-body{display:none}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 16px;align-items:end}
 .full{grid-column:1/-1}
+.run-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;align-items:start}
+.run-col{display:flex;flex-direction:column;gap:12px;min-width:0}
 label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
 label.check{flex-direction:row;align-items:center;gap:8px;grid-column:1/-1;color:var(--ink);font-size:14px}
+label.check input{flex:none}
 input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
 input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;grid-column:1/-1}
@@ -85,6 +88,6 @@ td a{color:var(--accent);cursor:pointer;margin-right:10px}
 .pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600}
 .p-done{background:var(--ok-bg);color:var(--ok)}.p-running,.p-queued{background:var(--na-bg);color:var(--accent)}
 .p-failed,.p-interrupted{background:var(--bad-bg);color:var(--bad)}.p-cancelled{background:var(--na-bg);color:var(--na)}
-@media (max-width:640px){.step-body{padding:0 16px 16px}.doc-grid,.counts{grid-template-columns:1fr 1fr}.kv{grid-template-columns:1fr}}
+@media (max-width:640px){.step-body{padding:0 16px 16px}.run-grid{grid-template-columns:1fr}.doc-grid,.counts{grid-template-columns:1fr 1fr}.kv{grid-template-columns:1fr}}
 .notice{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);color:var(--ink);border:1px solid var(--warn);border-radius:10px;padding:10px 14px;margin:14px 0;font-size:14px;line-height:1.5}
 .notice-ic{flex:none;width:20px;height:20px;border-radius:50%;background:var(--warn);color:var(--warn-bg);font-weight:700;font-size:13px;display:grid;place-items:center;margin-top:1px}
