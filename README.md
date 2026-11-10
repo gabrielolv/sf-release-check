@@ -16,11 +16,12 @@ to take. You get two shareable documents in Word or PDF:
 - **Non-technical**, for managers, PMs and POs: the verdict, top risks, key dates, decisions needed, user-facing
   changes and a readiness plan.
 
-The analysis is done by Claude. It runs in a web app on your own machine, and the org is only read, never changed.
+The analysis is done by an AI model: Claude, OpenAI, Gemini, any OpenAI-compatible API, or a model running on your
+own machine or server. It runs in a web app on your own machine, and the org is only read, never changed.
 
 ```
 Release notes (PDF / Word) ─► parse ─► ~1,700 changes ─┐
-                                                       ├─► rule-based pre-check ─► Claude analysis ─► Word / PDF / HTML / Excel
+                                                       ├─► rule-based pre-check ─► AI analysis ─► Word / PDF / HTML / Excel
 Salesforce org ─► read-only inventory ─────────────────┘   (shortlist + evidence)   (rating, evidence, actions,
  (Log in with Salesforce)  licenses, packages, metadata,                             owners, summary per audience)
                            API versions, logins, source code
@@ -46,7 +47,7 @@ Salesforce org ─► read-only inventory ────────────�
 |---|---|
 | **Docker** | [Docker Desktop](https://www.docker.com/products/docker-desktop/) on Windows or macOS, or Docker Engine with Compose v2.24+ on Linux. On Windows, Docker Desktop uses WSL 2, which its installer sets up for you. You don't need to install a Linux distribution such as Ubuntu. |
 | **A Salesforce login** | Use a user that has *API Enabled* and *View Setup and Configuration*. *View All Data* gives more complete record counts and login history. Start with a **sandbox**, ideally the preview sandbox of the coming release. |
-| **Claude access** (one of these) | A **Claude account** on a Pro, Max, Team or Enterprise plan, with Claude Code enabled for your seat. Usage counts against your plan, so there is no extra bill. **Or** a **Claude API key** from [console.anthropic.com](https://console.anthropic.com), billed per use. |
+| **An AI model** (one of these) | A **Claude account** on a Pro, Max, Team or Enterprise plan, with Claude Code enabled for your seat. Usage counts against your plan, so there is no extra bill. **Or** an **API key** for Claude ([console.anthropic.com](https://console.anthropic.com)), OpenAI, Google Gemini or any OpenAI-compatible service, billed per use. **Or** a **local or private server** (Ollama, LM Studio, vLLM, llama.cpp...). Whichever model you use must support **tool calling**. |
 | **The release notes** | The PDF of the coming release, from [help.salesforce.com](https://help.salesforce.com/s/articleView?id=release-notes.salesforce_release_notes.htm) > *Download PDF*. A Word (.docx) version works too. |
 
 You don't need Python, the Salesforce CLI or Claude Code on your machine, because the image includes everything.
@@ -121,27 +122,38 @@ The page walks you through five steps. Each step unlocks when the previous one i
 1. **Log in to Salesforce.** This works like Workbench. Choose *Sandbox*, *Production* or *Custom domain* (My
    Domain URL), pick the API version, and click **Log in with Salesforce**. The normal Salesforce login page opens,
    where MFA and SSO work as usual, and you come back connected. The app only reads from the org.
-2. **Connect Claude.** Choose one:
+2. **Connect an AI model.** Choose one of three tabs:
    - **Claude account:** open a terminal on any machine where Claude Code is installed (`npm i -g
      @anthropic-ai/claude-code`, or see [the Claude Code setup guide](https://docs.claude.com/en/docs/claude-code/setup)).
      Run `claude setup-token`, sign in with your Claude account in the browser, and paste the token it prints
      (`sk-ant-oat01-...`). The token is valid for about a year, and you can save it in `.env` so you don't need to
      paste it again (see [Settings](#settings-env)).
-   - **Claude API key:** paste a key from the Anthropic Console. You set a spending cap for each analysis.
+   - **API key:** pick the provider (Claude, OpenAI, Google Gemini, or *Other* for any OpenAI-compatible service such as
+     OpenRouter, Azure OpenAI, Mistral, Groq or a company gateway) and paste the key. For *Other*, also enter the
+     base URL. You choose the model in the Analysis step. A Claude key has a spending cap in USD. The other
+     providers have a **token cap**, because their price per token isn't known to the app.
+   - **Local / private server:** enter the URL of an OpenAI-compatible server that ends in `/v1`, for example
+     `http://host.docker.internal:11434/v1` for Ollama or `http://host.docker.internal:1234/v1` for LM Studio, and
+     optionally the model and a key. Inside Docker, `localhost` is the container, so use `host.docker.internal` to
+     reach a server on your computer. Nothing leaves your network, but see the notes on local models below.
 
-   Both are checked when you connect.
+   Everything is checked when you connect. **A model without tool calling is rejected**: the analysis relies on
+   the model running read-only queries and searches, so the app tests this when you connect and again when you
+   start the analysis.
 3. **Release notes.** Drag in the PDF or Word file. The page shows the release name (for example *Winter '27*) and
    how many changes were found.
 4. **Analysis.** Choose the options:
-   - **Claude model:** Opus 5.5 is recommended for the best judgement. Sonnet 5.5 is faster and cheaper.
-   - **Parallel batches:** how many batches Claude reviews at once. This changes only how long the run takes, not the
+   - **Model:** for Claude, Opus 5.5 is recommended for the best judgement, and Sonnet 5.5 is faster and cheaper. For
+     the other providers, pick one of the models the service lists. Use a strong model.
+   - **Parallel batches:** how many batches the model reviews at once. This changes only how long the run takes, not the
      tokens or the cost. Lower it if you hit rate limits.
-   - **Include unmanaged source code:** lets Claude check whether your Apex, Visualforce, LWC or Aura code uses a
+   - **Include unmanaged source code:** lets the model check whether your Apex, Visualforce, LWC or Aura code uses a
      changed feature. Turn it off if code must not leave the company, which makes the analysis less precise.
-   - **Rule-based only:** skips Claude completely. It's free and quick, but much less accurate.
+   - **Rule-based only:** skips the AI completely. It's free and quick, but much less accurate.
 
    Click **Start analysis**. You see each stage live, a progress bar, the activity log, the elapsed time, the tokens
-   used and the cost (for a Claude account, the API-equivalent value, which isn't billed). You can cancel at any time.
+   used and the cost (for a Claude account, the API-equivalent value, which isn't billed; for OpenAI, Gemini and other
+   APIs, tokens only). You can cancel at any time.
 5. **Documentation.** When the run finishes, you get the High, Medium and Low counts, a one-paragraph verdict, and
    download buttons:
    - **Technical document** and **Non-technical document**, each in **Word** or **PDF**.
@@ -160,6 +172,8 @@ All settings are optional. Copy [.env.example](.env.example) to `.env` next to `
 |---|---|
 | `CLAUDE_CODE_OAUTH_TOKEN` | Your `claude setup-token` token, so step 2 is done automatically |
 | `ANTHROPIC_API_KEY` | A Claude API key, used instead of the account token |
+| `OPENAI_API_KEY` / `GEMINI_API_KEY` | An OpenAI or Google Gemini API key |
+| `RC_LLM_BASE_URL` / `RC_LLM_API_KEY` / `RC_LLM_MODEL` | A local or private OpenAI-compatible server (the key and model are optional) |
 | `SF_CLIENT_ID` / `SF_CLIENT_SECRET` | Your own Salesforce External Client App, if the org blocks the default one (see [Troubleshooting](#troubleshooting)) |
 | `RC_MAX_UPLOAD_MB` | Maximum size of an uploaded release-notes file (default 200) |
 
@@ -176,7 +190,18 @@ Opus 5.5, 4 parallel batches):
 | Tokens | about **8 million**. Most of them (6.6 million) are cached re-reads of the rules and the org profile, which cost 5% of the normal input price. |
 | Cost | about **$16 API-equivalent**. With a Claude account it isn't billed and counts against your plan's usage limits instead. With an API key it is billed, and the spending cap stops the run if it is reached. |
 
-A bigger org or more shortlisted changes means more batches. Sonnet 5.5 costs about half as much as Opus.
+A bigger org or more shortlisted changes means more batches. Sonnet 5.5 costs about half as much as Opus. These
+numbers are for Claude. OpenAI and Gemini runs are stopped by a token cap (15 million by default) instead of a
+spending cap. A local model has no per-token cost, but it can be much slower, depending on your hardware.
+
+### Local models: what to expect
+
+The rules, the rating rubric and the JSON output are demanding. A strong model gives results close to Claude's.
+Small models (roughly under 30B parameters) often skip the evidence checks or ignore the rubric, so treat their
+ratings with care and review the High items yourself. Give the model a context window of at least 32k tokens (Ollama
+defaults to much less: set `OLLAMA_CONTEXT_LENGTH=32768`), and lower *Parallel batches* to 1 or 2 unless the server
+can serve several requests at once. The result of the OpenAI, Gemini and local engines has been tested with a
+simulated server only, not yet with the real services.
 
 ## Update, stop and uninstall
 
@@ -206,11 +231,12 @@ Read this before running the tool on a client org.
 - **The org is read-only.** Nothing is written to Salesforce. The app only runs queries, and Claude can only run
   `SELECT` queries, with a limit per batch.
 - **No record data is collected.** The app reads counts and metadata only, never customer or patient records.
-- **What is sent to Claude:** the org profile (component names and counts, connected apps, sites, login types and
+- **What is sent to the AI model:** the org profile (component names and counts, connected apps, sites, login types and
   API versions) and, unless you turn it off, **excerpts of unmanaged source code**. Check that the client's data and
-  AI policy allows this. If it doesn't, untick *Include unmanaged source code*, or choose *Rule-based only* so that
-  nothing leaves your machine.
-- **Secrets stay in memory.** Salesforce tokens and the Claude token or key are never written to disk or logs. They
+  AI policy allows this, for every provider you use (Claude, OpenAI, Google or another service). If it doesn't,
+  untick *Include unmanaged source code*, use a **local or private server** that you control, or choose
+  *Rule-based only* so that nothing leaves your machine.
+- **Secrets stay in memory.** Salesforce tokens and the AI token or key are never written to disk or logs. They
   are gone when the container stops, and *Log out* revokes the Salesforce session.
 - **The app is local only.** It is published on `127.0.0.1`, so other computers can't reach it (Options A and B).
 - **Analyses contain org metadata and source code.** They are stored in `data/`, or the Docker volume. Delete a run
@@ -222,11 +248,13 @@ It uses the OAuth 2.0 web server flow with PKCE, the same way the Salesforce CLI
 the Salesforce CLI's global connected app (`PlatformCLI`), which every org already has, so nothing needs to be set up
 in the org. That app's callback is fixed at `http://localhost:1717/OauthRedirect`, which is why the port is 1717.
 
-### Why the Claude account uses a token and not a "Log in with Claude" button
+### Why there is no "Log in with ChatGPT / Google / Claude" button
 
 Anthropic doesn't allow third-party apps to offer their own claude.ai login. The supported route is to sign in
 with the official Claude Code client. `claude setup-token` does the browser login on your machine and gives you a
 long-lived token for your plan. The app then runs Claude Code, which is included in the image, with that token.
+OpenAI and Google don't offer this to third-party apps for ChatGPT or Google accounts, so for those providers you use
+an API key.
 
 ## Build the image from source
 
@@ -262,6 +290,7 @@ extension also works, because its bundled CLI is found automatically.
 | `.\run.ps1 --no-ai` | Rule-based ratings only, with no Claude call |
 | `.\run.ps1 --engine api --budget 30` | Use the Claude API (`ANTHROPIC_API_KEY`) instead of Claude Code, with a spending cap |
 | `.\run.ps1 --model claude-sonnet-5-5` | Choose the Claude model |
+| `.\run.ps1 --engine openai --base-url http://localhost:11434/v1 --model qwen2.5:32b` | Use any OpenAI-compatible API (OpenAI, Gemini, Ollama, LM Studio, vLLM...). The key, if needed, comes from `LLM_API_KEY` or `OPENAI_API_KEY`. Add `--token-cap 15` to stop after 15 million tokens. |
 | `.\run.ps1 --parallel 5` | Run more AI batches at once |
 | `.\run.ps1 --skip-source` | Don't download unmanaged Apex, VF, LWC or Aura source |
 | `.\run.ps1 --resume output\<run>` | Continue a run, for example after a batch failed. Batches that finished are reused. |
@@ -288,8 +317,8 @@ The full rubric is in [.claude/skills/sf-release-impact/references/impact-rubric
 | 1 | [webapp/salesforce_oauth.py](webapp/salesforce_oauth.py) (web), [scripts/rc/sfcli.py](scripts/rc/sfcli.py) (CLI) | Salesforce login and session handling |
 | 2 | [scripts/rc/parse_release_notes.py](scripts/rc/parse_release_notes.py) | Splits the PDF or Word file into individual changes, using the heading styles and page footers to find each product area. Drops changelogs, highlight recaps and availability tables. |
 | 3 | [scripts/rc/org_inventory.py](scripts/rc/org_inventory.py) | **Read-only** REST and Tooling API queries: organization, licenses, packages, record counts, metadata counts and API versions, flows by type, connected apps, named credentials, sites, login types and API versions (last 30 days), and unmanaged source code. Works out which capabilities are in use from [config/capabilities.json](config/capabilities.json). |
-| 4 | [scripts/rc/prefilter.py](scripts/rc/prefilter.py) | Scores every change for relevance (product area, keywords, code references) and severity ([config/impact_rules.json](config/impact_rules.json)), and builds the shortlist for Claude |
-| 5 | [scripts/rc/ai_analysis.py](scripts/rc/ai_analysis.py) (Claude account, through Claude Code), [scripts/rc/ai_api.py](scripts/rc/ai_api.py) (API key) | Claude reviews the shortlist in batches. It checks the evidence with read-only tools (SOQL, source search, release-notes lookup), then gives the final rating, rationale, actions, owners, effort, deadline and test notes. It ends with a summary for each audience. Both engines follow the same rules in [.claude/skills/sf-release-impact/references/](.claude/skills/sf-release-impact/references/). |
+| 4 | [scripts/rc/prefilter.py](scripts/rc/prefilter.py) | Scores every change for relevance (product area, keywords, code references) and severity ([config/impact_rules.json](config/impact_rules.json)), and builds the shortlist for the AI model |
+| 5 | [scripts/rc/ai_analysis.py](scripts/rc/ai_analysis.py) (Claude account, through Claude Code), [scripts/rc/ai_api.py](scripts/rc/ai_api.py) (Claude API key), [scripts/rc/ai_openai.py](scripts/rc/ai_openai.py) (OpenAI, Gemini, other APIs and local servers) | The model reviews the shortlist in batches. It checks the evidence with read-only tools (SOQL, source search, release-notes lookup), then gives the final rating, rationale, actions, owners, effort, deadline and test notes. It ends with a summary for each audience. All engines follow the same rules in [.claude/skills/sf-release-impact/references/](.claude/skills/sf-release-impact/references/). |
 | 6 | [scripts/rc/report.py](scripts/rc/report.py), [scripts/rc/docs.py](scripts/rc/docs.py) | Produces the HTML report, the Excel file and the Markdown file, and the technical and non-technical documents in Word and PDF |
 | - | [webapp/](webapp/) | FastAPI web app: background runs with live progress ([jobs.py](webapp/jobs.py)) and the page ([static/](webapp/static/)) |
 
@@ -316,6 +345,8 @@ new image.
 | `denied` or `unauthorized` when pulling the image | Run `docker logout ghcr.io` and pull again. An old ghcr.io login can block anonymous pulls. |
 | Salesforce login fails with `OAUTH_APP_BLOCKED` or *app not approved* | The org blocks the Salesforce CLI connected app. Ask the admin to create an External Client App with the callback `http://localhost:1717/OauthRedirect`, the OAuth scopes *Manage user data via APIs (api)* and *Perform requests at any time (refresh_token)*, and PKCE enabled. Then put its consumer key in `.env` as `SF_CLIENT_ID`. |
 | `CERTIFICATE_VERIFY_FAILED`, or Claude or Salesforce can't be reached | Your network inspects HTTPS. See [Company networks](#company-networks-zscaler-netskope). |
+| `does not support tool calling` | The model can't run the read-only checks that the analysis needs. Pick another model. For Ollama, choose a model tagged *tools*. |
+| Can't reach a local server from the app | Inside Docker, `localhost` is the container. Use `http://host.docker.internal:<port>/v1`, and make sure the server listens on all interfaces (for Ollama, `OLLAMA_HOST=0.0.0.0`). |
 | The Claude account is rejected | Create a new token with `claude setup-token`. If the message says Claude Code isn't enabled, ask your Claude Team or Enterprise admin to enable it for your seat. |
 | Rate-limit errors in the activity log, or batches marked *not completed* | Lower *Parallel batches* and start a new analysis. Rate-limited calls are retried automatically, and a failed batch is retried once, so a few errors in the log are normal. |
 | "*N* queries skipped" in the org inventory | The user is missing a permission, or the edition doesn't have the feature. This is usually harmless. The details are in the run's `org/org_inventory.json` > `warnings`. |

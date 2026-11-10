@@ -14,4 +14,6 @@ services:
     env_file:
       - path: .env              # optional - see .env.example
         required: false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # lets the app reach a local LLM server (Ollama, LM Studio...) on Linux too
     restart: unless-stopped

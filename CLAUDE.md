@@ -4,10 +4,14 @@ Python pipeline + Claude agent that rates the impact of a Salesforce release on 
 
 - Entry points: web app `webapp/app.py` (Docker: `docker compose up`, port 1717 is fixed by the Salesforce OAuth
   callback) and CLI `release_check.py` (wrappers `run.ps1`, `run.sh`). Pipeline modules in `scripts/rc/`.
-- AI engines: `rc/ai_api.py` (Claude API key, tool runner) and `rc/ai_analysis.py` (headless Claude Code - used by
-  the CLI and by the web app's "Claude account" option via `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token`).
-  Both read the same rules from `.claude/skills/sf-release-impact/references/`. Without the sf CLI (Docker) the agent
-  uses `python -m rc.soql` for read-only SOQL. Never implement a custom claude.ai OAuth login.
+- AI engines: `rc/ai_api.py` (Claude API key, tool runner; also holds the engine-independent `run_analysis()` batch
+  orchestration), `rc/ai_openai.py` (any OpenAI-compatible API: OpenAI, Gemini, Ollama/LM Studio/vLLM, private servers;
+  stdlib HTTP only, final answer through a `submit_result` tool, models without tool calling are rejected) and
+  `rc/ai_analysis.py` (headless Claude Code - used by the CLI and by the web app's "Claude account" option via
+  `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token`). All read the same rules from
+  `.claude/skills/sf-release-impact/references/`. Web routes are `/api/ai/{account,key,local}`. Without the sf CLI
+  (Docker) the agent uses `python -m rc.soql` for read-only SOQL. Never implement a custom claude.ai OAuth login (and
+  OpenAI/Google consumer-account logins are not offered either: those providers use API keys).
 - Skill `/sf-release-impact` (`.claude/skills/sf-release-impact/`) - how to run it and answer questions about a run;
   its `references/` are the rating rubric, audience guide and JSON contracts.
 - Agent `sf-release-impact-analyst` (`.claude/agents/`) - invoked headless by `scripts/rc/ai_analysis.py`.
