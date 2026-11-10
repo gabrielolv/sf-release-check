@@ -252,7 +252,7 @@ class JobManager:
             st = self.state(d.name) if d.is_dir() else None
             if st:
                 out.append({k: st.get(k) for k in ("id", "status", "created", "release", "source", "org", "counts",
-                                                   "cost_usd", "overall_risk")})
+                                                   "cost_usd", "overall_risk", "options")})
         return out
 
     def delete(self, run_id: str) -> bool:

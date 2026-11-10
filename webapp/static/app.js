@@ -192,13 +192,21 @@ document.querySelectorAll('[data-doc]').forEach((btn) => btn.addEventListener('c
 }));
 
 // ---------------------------------------------------------------- history
+function modelText(o) {
+  if (!o) return '-';
+  if (o.no_ai || o.engine === 'none') return 'Rule-based only';
+  const m = o.model ? (MODEL_LABELS[o.model] || o.model).replace(/ \(.*\)$/, '') : '';
+  if (o.engine === 'openai') return `${o.provider_label || 'AI'}${m ? ' · ' + m : ''}`;
+  return m || (o.engine === 'account' ? 'Claude account' : 'Claude API');
+}
 async function loadRuns() {
   const runs = await api('/api/runs').catch(() => []);
   $('#runs').innerHTML = runs.length ? runs.map((r) => `<tr><td>${esc(r.created)}</td><td>${esc(r.org?.name || r.org?.alias)}</td>
     <td>${esc(r.release)}</td><td><span class="pill p-${esc(r.status)}">${esc(r.status)}</span></td>
     <td>${r.counts ? `${r.counts.High} / ${r.counts.Medium} / ${r.counts.Low}` : ''}</td>
-    <td><a data-open="${esc(r.id)}">Open</a>${['running', 'queued'].includes(r.status) ? '' : `<a data-del="${esc(r.id)}">Delete</a>`}</td></tr>`).join('')
-    : '<tr><td colspan="6" class="muted">No analyses yet.</td></tr>';
+    <td><a data-open="${esc(r.id)}">Open</a>${['running', 'queued'].includes(r.status) ? '' : `<a data-del="${esc(r.id)}">Delete</a>`}</td>
+    <td>${esc(modelText(r.options))}</td></tr>`).join('')
+    : '<tr><td colspan="7" class="muted">No analyses yet.</td></tr>';
   document.querySelectorAll('[data-open]').forEach((a) => a.onclick = () => { showRun(a.dataset.open); window.scrollTo({top: $('#step-run').offsetTop - 10, behavior: 'smooth'}); });
   document.querySelectorAll('[data-del]').forEach((a) => a.onclick = async () => {
     if (!confirm('Delete this analysis and its documents? This also removes the downloaded org metadata and source code.')) return;
