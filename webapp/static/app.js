@@ -204,8 +204,8 @@ async function loadRuns() {
   $('#runs').innerHTML = runs.length ? runs.map((r) => `<tr><td>${esc(r.created)}</td><td>${esc(r.org?.name || r.org?.alias)}</td>
     <td>${esc(r.release)}</td><td><span class="pill p-${esc(r.status)}">${esc(r.status)}</span></td>
     <td>${r.counts ? `${r.counts.High} / ${r.counts.Medium} / ${r.counts.Low}` : ''}</td>
-    <td><a data-open="${esc(r.id)}">Open</a>${['running', 'queued'].includes(r.status) ? '' : `<a data-del="${esc(r.id)}">Delete</a>`}</td>
-    <td>${esc(modelText(r.options))}</td></tr>`).join('')
+    <td>${esc(modelText(r.options))}</td>
+    <td><a data-open="${esc(r.id)}">Open</a>${['running', 'queued'].includes(r.status) ? '' : `<a data-del="${esc(r.id)}">Delete</a>`}</td></tr>`).join('')
     : '<tr><td colspan="7" class="muted">No analyses yet.</td></tr>';
   document.querySelectorAll('[data-open]').forEach((a) => a.onclick = () => { showRun(a.dataset.open); window.scrollTo({top: $('#step-run').offsetTop - 10, behavior: 'smooth'}); });
   document.querySelectorAll('[data-del]').forEach((a) => a.onclick = async () => {
