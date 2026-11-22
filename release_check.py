@@ -8,6 +8,7 @@ documentation (HTML, Excel, Markdown) rating every change High / Medium / Low / 
     python release_check.py --target-org MYSANDBOX     # use (or re-login to) a specific org alias
     python release_check.py --no-ai                 # rule-based ratings only (no Claude call)
     python release_check.py --engine api            # Claude API (ANTHROPIC_API_KEY) instead of Claude Code
+    python release_check.py --engine openai --base-url http://localhost:11434/v1 --model qwen2.5:32b   # OpenAI-compatible
     python release_check.py --resume output/<run>   # continue a run (e.g. after an AI batch failed)
     python release_check.py --report-only output/<run>
 
@@ -94,8 +95,13 @@ def main() -> int:
     ap.add_argument("--target-org", help="alias/username of an authenticated org (prompts to log in if expired)")
     ap.add_argument("--pdf", help="release notes PDF (default: newest in 'Release Note/')")
     ap.add_argument("--no-ai", action="store_true", help="skip the Claude analysis (rule-based ratings only)")
-    ap.add_argument("--engine", choices=["claude-code", "api"], default="claude-code",
-                    help="claude-code: headless Claude Code + agent (default); api: Claude API with ANTHROPIC_API_KEY")
+    ap.add_argument("--engine", choices=["claude-code", "api", "openai"], default="claude-code",
+                    help="claude-code: headless Claude Code + agent (default); api: Claude API with ANTHROPIC_API_KEY; "
+                         "openai: any OpenAI-compatible API (OpenAI, Gemini, Ollama, LM Studio, vLLM...) - needs "
+                         "--base-url and --model, key from LLM_API_KEY / OPENAI_API_KEY (optional for local servers)")
+    ap.add_argument("--base-url", help="openai engine: API base URL, e.g. https://api.openai.com/v1 or "
+                                       "http://localhost:11434/v1")
+    ap.add_argument("--token-cap", type=float, help="openai engine: stop after this many million new input+output tokens")
     ap.add_argument("--budget", type=float, help="spending cap in USD (api engine only)")
     ap.add_argument("--model", help="Claude model for the analysis (default: your Claude Code default)")
     ap.add_argument("--parallel", type=int, default=3, help="concurrent Claude batches (default 3)")
@@ -117,6 +123,15 @@ def main() -> int:
     print("Salesforce Release Impact Check")
     if args.engine == "api" and not args.no_ai and not os.environ.get("ANTHROPIC_API_KEY"):
         sys.exit("--engine api needs the ANTHROPIC_API_KEY environment variable.")
+    llm_key = os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY") or ""
+    if args.engine == "openai" and not args.no_ai:
+        if not args.base_url or not args.model:
+            sys.exit("--engine openai needs --base-url and --model.")
+        from rc import ai_openai
+        try:
+            ai_openai.check_tool_calling(ai_openai.Client(args.base_url.rstrip("/"), llm_key, 180), args.model)
+        except ai_openai.LLMError as exc:
+            sys.exit(f"Model rejected: {exc}")
     check_prereqs(need_ai=not args.no_ai and args.engine == "claude-code")
 
     if args.resume:
@@ -170,6 +185,21 @@ def main() -> int:
                                      parallel=args.parallel, budget_usd=args.budget,
                                      org_rest=SalesforceRest(display_org(meta["target_org"])), on_event=show)
             print(f"  Estimated Claude API cost: ${res['cost_usd']:.2f}")
+        elif args.engine == "openai":
+            from rc import ai_openai
+            from rc.sfcli import SalesforceRest, display_org
+
+            def show_oa(e):
+                if e["type"] == "batch_done":
+                    print(f"    batch {e['batch']:02d}: {'ok' if e['ok'] else 'FAILED'} ({e['done']}/{e['total']})")
+                elif e["type"] == "log":
+                    print(f"    {e['message']}")
+            res = ai_openai.analyse_openai(run_dir, args.base_url.rstrip("/"), llm_key, args.model,
+                                           parallel=args.parallel,
+                                           token_cap=int(args.token_cap * 1_000_000) if args.token_cap else None,
+                                           org_rest=SalesforceRest(display_org(meta["target_org"])), on_event=show_oa)
+            t = res["tokens"]
+            print(f"  Tokens: {t['input']:,} new input, {t['cache_read']:,} cached, {t['output']:,} output")
         else:
             res = ai_analysis.analyse(run_dir, model=args.model, parallel=args.parallel)
         print(f"  AI reviewed {res['reviewed']} features in {res['batches']} batches")

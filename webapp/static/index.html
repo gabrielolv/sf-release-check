@@ -51,18 +51,19 @@
     </div>
   </section>
 
-  <!-- 2. Claude -->
+  <!-- 2. AI model -->
   <section class="step locked" id="step-claude">
-    <div class="step-head"><span class="num">2</span><h2>Connect Claude</h2><span class="state" id="cl-state"></span></div>
+    <div class="step-head"><span class="num">2</span><h2>Connect an AI model</h2><span class="state" id="cl-state"></span></div>
     <div class="step-body">
-      <div id="cl-connected" hidden>
-        <dl class="kv" id="cl-info"></dl>
-        <div class="actions"><button class="ghost" type="button" id="cl-clear">Disconnect / switch</button></div>
+      <div id="ai-connected" hidden>
+        <dl class="kv" id="ai-info"></dl>
+        <div class="actions"><button class="ghost" type="button" id="ai-clear">Disconnect / switch</button></div>
       </div>
-      <div id="cl-choose">
+      <div id="ai-choose">
         <div class="tabs" role="tablist">
           <button type="button" class="tab on" data-tab="account" role="tab">Claude account</button>
-          <button type="button" class="tab" data-tab="api" role="tab">Claude API key</button>
+          <button type="button" class="tab" data-tab="api" role="tab">API key</button>
+          <button type="button" class="tab" data-tab="local" role="tab">Local / private server</button>
         </div>
         <form id="cl-account" class="grid tab-panel" data-panel="account">
           <ol class="steps-list full">
@@ -79,16 +80,53 @@
             against your Claude plan's usage limits. There is no API bill. The token is kept in memory only. Your Claude
             admin may need to allow Claude Code for your seat.</p>
         </form>
-        <form id="cl-form" class="grid tab-panel" data-panel="api" hidden>
-          <label class="full">Anthropic API key
-            <input type="password" id="cl-key" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+        <form id="key-form" class="grid tab-panel" data-panel="api" hidden>
+          <label>Provider
+            <select id="key-provider">
+              <option value="claude">Claude (Anthropic)</option>
+              <option value="openai">OpenAI</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="other">Other (OpenAI-compatible API)</option>
+            </select>
+          </label>
+          <label id="key-url-wrap" hidden>Base URL
+            <input id="key-url" placeholder="https://api.example.com/v1" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="full"><span id="key-label">Anthropic API key</span>
+            <input type="password" id="key-secret" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+          </label>
+          <label id="key-model-wrap" class="full" hidden>Model <span class="hint">Optional if the API lists its models. It is
+            checked for tool calling right away.</span>
+            <input id="key-model" placeholder="model name" autocomplete="off" spellcheck="false">
           </label>
           <div class="actions"><button class="primary" type="submit">Save and verify</button></div>
-          <p class="hint full">Pay-per-use key from console.anthropic.com (or your organization's Console workspace).
-            It is kept in memory for this browser session only.</p>
+          <p class="hint full" id="key-hint"></p>
         </form>
-        <p class="hint">Either way, org metadata and unmanaged code excerpts are sent to Claude, so check your client's
-          data and AI policy.</p>
+        <form id="local-form" class="grid tab-panel" data-panel="local" hidden>
+          <label class="full">Server URL <span class="hint">An OpenAI-compatible endpoint that ends in <code>/v1</code>.</span>
+            <input id="local-url" placeholder="http://host.docker.internal:11434/v1" autocomplete="off" spellcheck="false">
+          </label>
+          <label>Model <span class="hint">Optional if the server lists its models.</span>
+            <input id="local-model" placeholder="e.g. qwen2.5:32b" autocomplete="off" spellcheck="false">
+          </label>
+          <label>API key <span class="hint">Only if your server needs one.</span>
+            <input type="password" id="local-key" placeholder="optional" autocomplete="off" spellcheck="false">
+          </label>
+          <div class="actions"><button class="primary" type="submit">Connect and test</button></div>
+          <ul class="hint full tips">
+            <li>Works with Ollama (<code>http://host.docker.internal:11434/v1</code>), LM Studio
+              (<code>http://host.docker.internal:1234/v1</code>), vLLM, llama.cpp and private servers. From inside Docker,
+              <code>localhost</code> is the container, so use <code>host.docker.internal</code> for a server on this computer.</li>
+            <li>The model must support <b>tool calling</b>. It is tested when you connect and again when the analysis
+              starts, and a model without it is rejected.</li>
+            <li>Use a large model with a context window of at least 32k tokens (Ollama's default is much smaller, so
+              raise it, for example <code>OLLAMA_CONTEXT_LENGTH=32768</code>). Small models often return poor ratings.</li>
+            <li>Set <b>Parallel batches</b> to 1 or 2 unless your server can handle several requests at once.</li>
+          </ul>
+        </form>
+        <p class="hint">With Claude, OpenAI, Gemini or another hosted API, org metadata and unmanaged code excerpts are sent
+          to that provider, so check your client's data and AI policy. A local or private server keeps everything on
+          your own network.</p>
       </div>
     </div>
   </section>
@@ -113,19 +151,25 @@
     <div class="step-body">
       <form id="run-form" class="run-grid">
         <div class="run-col">
-          <label>Claude model
+          <label>Model
             <select id="run-model"></select>
           </label>
           <label>Parallel batches
             <input type="number" id="run-parallel" value="4" min="1" max="8">
-            <span class="hint">How many batches Claude reviews at the same time. It changes only how long the run takes,
+            <span class="hint">How many batches the model reviews at the same time. It changes only how long the run takes,
               not the tokens or cost: the batches are the same either way. Higher values hit rate limits sooner (API key)
-              or use your plan's usage window faster (Claude account). Lower it if you see rate-limit errors.</span>
+              or use your plan's usage window faster (Claude account). Lower it if you see rate-limit errors, and use 1
+              or 2 on a local server.</span>
           </label>
         </div>
         <div class="run-col">
-          <label>Spending cap (USD)
+          <label id="budget-usd-wrap">Spending cap (USD)
             <input type="number" id="run-budget" value="30" min="1" max="1000" step="1">
+          </label>
+          <label id="budget-tok-wrap" hidden>Token cap (millions)
+            <input type="number" id="run-tokcap" value="15" min="0.5" max="1000" step="0.5">
+            <span class="hint">The run stops when new input plus output tokens reach this. Cached input is not counted.
+              A full run of this size used about 8 million tokens on Claude, and other models can use more.</span>
           </label>
           <label class="check"><input type="checkbox" id="run-source" checked> Include unmanaged source code (Apex, VF, LWC, Aura)</label>
           <label class="check"><input type="checkbox" id="run-noai"> Rule-based only (no AI, no cost, less accurate)</label>
@@ -177,7 +221,7 @@
   <!-- History -->
   <section class="history">
     <h2>Previous analyses</h2>
-    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Org</th><th>Release</th><th>Status</th><th>High / Med / Low</th><th></th></tr></thead>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Org</th><th>Release</th><th>Status</th><th>High / Med / Low</th><th>Model</th><th></th></tr></thead>
       <tbody id="runs"></tbody></table></div>
   </section>
 </main>

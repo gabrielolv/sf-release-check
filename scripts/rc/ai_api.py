@@ -264,6 +264,23 @@ def analyse_api(run_dir: Path, api_key: str, model: str = DEFAULT_MODEL, paralle
                 cancel: threading.Event | None = None) -> dict:
     """Run batch assessments + synthesis via the Claude API. Emits progress events through `on_event`."""
     cancel = cancel or threading.Event()
+    client = anthropic.Anthropic(api_key=api_key, max_retries=4)
+    budget = Budget(model, budget_usd)
+    return run_analysis(
+        run_dir, model, parallel, budget, org_rest, on_event, cancel, system_blocks,
+        lambda system, user, schema, effort, tools, on_tool:
+            _call(client, model, system, user, schema, effort, tools, budget, cancel, on_tool))
+
+
+def run_analysis(run_dir: Path, model: str, parallel: int, budget, org_rest: SalesforceRest | None,
+                 on_event: Callable[[dict], None], cancel: threading.Event,
+                 make_system: Callable[[str], object], call: Callable) -> dict:
+    """Engine-independent batch + synthesis orchestration, shared by the Claude API and OpenAI-compatible engines.
+
+    `budget` needs .total (USD), .tokens (dict), .cap and .exceeded(). `call(system, user, schema, effort, tools,
+    on_tool)` runs one tool conversation and returns (data, stop_reason); stop_reason "max_tokens" means the output
+    was cut off, and the batch is then split in two.
+    """
     run_dir = run_dir.resolve()
     ai_dir = run_dir / "ai"
     for sub in ("batches", "results"):
@@ -272,9 +289,7 @@ def analyse_api(run_dir: Path, api_key: str, model: str = DEFAULT_MODEL, paralle
     inv = json.loads((run_dir / "org" / "org_inventory.json").read_text(encoding="utf-8"))
     profile = org_digest(inv)
     (ai_dir / "org_profile.md").write_text(profile, encoding="utf-8")
-    system = system_blocks(profile)
-    client = anthropic.Anthropic(api_key=api_key, max_retries=4)
-    budget = Budget(model, budget_usd)
+    system = make_system(profile)
     batches = make_batches(pre, DEEP_SIZE, LIGHT_SIZE)
     total = len(batches)
     on_event({"type": "batches", "total": total, "features": sum(len(b["features"]) for b in batches)})
@@ -290,9 +305,8 @@ def analyse_api(run_dir: Path, api_key: str, model: str = DEFAULT_MODEL, paralle
         tools = build_tools(run_dir, org_rest, counter)
         user = (f"Batch {n:02d} ({b['mode']} mode) for release {pre['release']}. Assess every feature below.\n"
                 f"```json\n{json.dumps(b['features'], ensure_ascii=False)}\n```")
-        data, stop = _call(client, model, system, user, BATCH_SCHEMA, "high" if b["mode"] == "deep" else "low",
-                           tools, budget, cancel,
-                           lambda name, detail: on_event({"type": "tool", "batch": n, "tool": name, "detail": detail}))
+        data, stop = call(system, user, BATCH_SCHEMA, "high" if b["mode"] == "deep" else "low", tools,
+                          lambda name, detail: on_event({"type": "tool", "batch": n, "tool": name, "detail": detail}))
         if stop == "max_tokens":
             if depth >= 2 or len(b["features"]) == 1:
                 raise RuntimeError("response too long even after splitting the batch")
@@ -343,12 +357,8 @@ def analyse_api(run_dir: Path, api_key: str, model: str = DEFAULT_MODEL, paralle
             synth = json.loads((ai_dir / "synthesis_input.json").read_text(encoding="utf-8"))
             user = ("Write the release impact synthesis from these assessments.\n"
                     f"```json\n{json.dumps(synth, ensure_ascii=False)}\n```")
-            relaxed = Budget(model, None)  # always allow the summary once the batches are paid for
-            relaxed.total = budget.total
-            relaxed.tokens = budget.tokens  # same dict, so the summary's tokens are counted too
-            summary, stop = _call(client, model, system, user, SUMMARY_SCHEMA, "high", [], relaxed, cancel,
-                                  lambda *_: None)
-            budget.total = relaxed.total
+            budget.cap = None  # always allow the summary once the batches are paid for
+            summary, stop = call(system, user, SUMMARY_SCHEMA, "high", [], lambda *_: None)
             if stop == "max_tokens":
                 raise RuntimeError("summary too long")
             (ai_dir / "summary.json").write_text(json.dumps(summary, indent=1, ensure_ascii=False), encoding="utf-8")

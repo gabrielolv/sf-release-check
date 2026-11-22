@@ -91,3 +91,4 @@ td a{color:var(--accent);cursor:pointer;margin-right:10px}
 @media (max-width:640px){.step-body{padding:0 16px 16px}.run-grid{grid-template-columns:1fr}.doc-grid,.counts{grid-template-columns:1fr 1fr}.kv{grid-template-columns:1fr}}
 .notice{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);color:var(--ink);border:1px solid var(--warn);border-radius:10px;padding:10px 14px;margin:14px 0;font-size:14px;line-height:1.5}
 .notice-ic{flex:none;width:20px;height:20px;border-radius:50%;background:var(--warn);color:var(--warn-bg);font-weight:700;font-size:13px;display:grid;place-items:center;margin-top:1px}
+.tips{margin:0;padding-left:18px}.tips li{margin-bottom:4px}

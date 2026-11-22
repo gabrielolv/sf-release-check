@@ -10,7 +10,7 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-from rc import ai_analysis, ai_api, org_inventory, prefilter, report
+from rc import ai_analysis, ai_api, ai_openai, org_inventory, prefilter, report
 from rc.sfcli import SalesforceRest
 
 from . import salesforce_oauth
@@ -109,6 +109,16 @@ class Job:
                     self.log("Running the analysis on Claude Code with your Claude account")
                     res = ai_analysis.analyse(self.run_dir, model=opts["model"], parallel=opts["parallel"],
                                               extra_env=env, on_event=self._on_ai_event, cancel=self.cancel)
+                elif auth["mode"] == "openai":
+                    # OpenAI, Gemini, custom API or a local / private server (OpenAI-compatible, tool calling)
+                    cap = opts.get("token_cap_m")
+                    self.log(f"Running the analysis on {opts.get('provider_label', 'an OpenAI-compatible model')} "
+                             f"({opts['model']})")
+                    res = ai_openai.analyse_openai(self.run_dir, auth["base_url"], auth["secret"], opts["model"],
+                                                   parallel=opts["parallel"],
+                                                   token_cap=int(cap * 1_000_000) if cap else None,
+                                                   org_rest=SalesforceRest(org), on_event=self._on_ai_event,
+                                                   cancel=self.cancel)
                 else:
                     res = ai_api.analyse_api(self.run_dir, auth["secret"], model=opts["model"],
                                              parallel=opts["parallel"], budget_usd=opts["budget_usd"],
@@ -169,11 +179,12 @@ class Job:
             if e.get("tokens"):
                 self.state["tokens"] = e["tokens"]
         if kind == "batches":
-            self.log(f"Claude is reviewing {e['features']} features in {e['total']} batches")
+            self.log(f"The AI model is reviewing {e['features']} features in {e['total']} batches")
             self.stage("ai", "running", f"0 / {e['total']} batches")
         elif kind == "batch_done":
+            cost = "" if self.state["options"].get("engine") == "openai" else f", est. ${e['cost']:.2f}"
             self.log(f"batch {e['batch']:02d} {'done' if e['ok'] else 'not completed'} "
-                     f"({e['done']}/{e['total']}, est. ${e['cost']:.2f})")
+                     f"({e['done']}/{e['total']}{cost})")
             self.stage("ai", "running", f"{e['done']} / {e['total']} batches")
         elif kind == "tool":
             self.log(f"batch {e['batch']:02d} -> {e['tool']} {e['detail']}")
@@ -241,7 +252,7 @@ class JobManager:
             st = self.state(d.name) if d.is_dir() else None
             if st:
                 out.append({k: st.get(k) for k in ("id", "status", "created", "release", "source", "org", "counts",
-                                                   "cost_usd", "overall_risk")})
+                                                   "cost_usd", "overall_risk", "options")})
         return out
 
     def delete(self, run_id: str) -> bool:

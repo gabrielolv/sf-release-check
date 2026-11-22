@@ -38,23 +38,41 @@ try { const last = JSON.parse(localStorage.getItem('rc-login') || 'null');
     $('#sf-domain-wrap').hidden = last.env !== 'custom'; } } catch (_) {}
 $('#sf-logout').addEventListener('click', async () => { await api('/api/sf/logout', {method: 'POST'}); await refresh(); });
 
-// ---------------------------------------------------------------- Step 2 - Claude (account or API key)
+// ---------------------------------------------------------------- Step 2 - AI model (Claude account, API key, local server)
 function showTab(name) {
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.tab === name));
   document.querySelectorAll('.tab-panel').forEach((p) => { p.hidden = p.dataset.panel !== name; });
 }
 document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
-async function connectClaude(e, path, body, input, label) {
+async function connectAI(e, path, body, secretInput, label) {
   e.preventDefault();
   const btn = e.submitter, text = btn.textContent; btn.disabled = true; btn.textContent = label; banner();
-  try { await api(path, {method: 'POST', body: JSON.stringify(body)}); input.value = ''; await refresh(); }
+  try { await api(path, {method: 'POST', body: JSON.stringify(body)}); if (secretInput) secretInput.value = ''; await refresh(); }
   catch (err) { banner(err.message); } finally { btn.disabled = false; btn.textContent = text; }
 }
-$('#cl-account').addEventListener('submit', (e) => connectClaude(e, '/api/claude/account', {token: $('#cl-token').value.trim()},
+$('#cl-account').addEventListener('submit', (e) => connectAI(e, '/api/ai/account', {token: $('#cl-token').value.trim()},
   $('#cl-token'), 'Verifying with Claude Code...'));
-$('#cl-form').addEventListener('submit', (e) => connectClaude(e, '/api/claude/key', {api_key: $('#cl-key').value.trim()},
-  $('#cl-key'), 'Verifying...'));
-$('#cl-clear').addEventListener('click', async () => { await api('/api/claude/key', {method: 'DELETE'}); await refresh(); });
+
+const PROVIDERS = {
+  claude: {label: 'Anthropic API key', ph: 'sk-ant-api03-...', hint: "Pay-per-use key from console.anthropic.com (or your organization's Console workspace). It is kept in memory for this browser session only."},
+  openai: {label: 'OpenAI API key', ph: 'sk-...', hint: 'Pay-per-use key from platform.openai.com. You choose the model in the Analysis step, and it must support tool calling. The run is stopped by a token cap, because the cost is not known in advance.'},
+  gemini: {label: 'Gemini API key', ph: 'AIza...', hint: 'Key from Google AI Studio (aistudio.google.com/apikey), used through the Gemini OpenAI-compatible endpoint. You choose the model in the Analysis step, and it must support tool calling. The run is stopped by a token cap.'},
+  other: {label: 'API key (leave empty if none)', ph: 'key', hint: 'Any service that offers an OpenAI-compatible Chat Completions API (for example OpenRouter, Azure OpenAI, Mistral, Groq or a company gateway). Enter its base URL, which usually ends in /v1.'},
+};
+function showProvider() {
+  const p = $('#key-provider').value, cfg = PROVIDERS[p];
+  $('#key-label').textContent = cfg.label; $('#key-secret').placeholder = cfg.ph; $('#key-hint').textContent = cfg.hint;
+  $('#key-url-wrap').hidden = $('#key-model-wrap').hidden = p !== 'other';
+}
+$('#key-provider').addEventListener('change', showProvider); showProvider();
+$('#key-form').addEventListener('submit', (e) => {
+  const p = $('#key-provider').value;
+  connectAI(e, '/api/ai/key', {provider: p, api_key: $('#key-secret').value.trim(), base_url: $('#key-url').value.trim(),
+    model: $('#key-model').value.trim()}, $('#key-secret'), p === 'other' ? 'Testing the model...' : 'Verifying...');
+});
+$('#local-form').addEventListener('submit', (e) => connectAI(e, '/api/ai/local', {base_url: $('#local-url').value.trim(),
+  api_key: $('#local-key').value.trim(), model: $('#local-model').value.trim()}, $('#local-key'), 'Connecting and testing (a model can take a minute to load)...'));
+$('#ai-clear').addEventListener('click', async () => { await api('/api/ai', {method: 'DELETE'}); await refresh(); });
 
 // ---------------------------------------------------------------- Step 3 - release notes
 const drop = $('#drop');
@@ -81,14 +99,18 @@ function upload(file) {
 }
 
 // ---------------------------------------------------------------- Step 4 - analysis
-$('#run-noai').addEventListener('change', (e) => { $('#run-model').disabled = $('#run-budget').disabled = e.target.checked; });
+$('#run-noai').addEventListener('change', (e) => { $('#run-model').disabled = $('#run-budget').disabled = $('#run-tokcap').disabled = e.target.checked; });
 $('#run-form').addEventListener('submit', async (e) => {
   e.preventDefault(); banner();
-  const body = {model: $('#run-model').value, include_source: $('#run-source').checked, no_ai: $('#run-noai').checked,
-    parallel: +$('#run-parallel').value || 4, budget_usd: S.claude.mode === 'account' ? null : (+$('#run-budget').value || null)};
-  $('#run-start').disabled = true;
+  const ai = S.ai, noai = $('#run-noai').checked;
+  if (!noai && ai.mode === 'openai' && !$('#run-model').value) { banner('Choose a model.'); return; }
+  const body = {model: $('#run-model').value, include_source: $('#run-source').checked, no_ai: noai,
+    parallel: +$('#run-parallel').value || 4, budget_usd: ai.mode === 'api' ? (+$('#run-budget').value || null) : null,
+    token_cap_m: ai.mode === 'openai' && ai.provider !== 'local' ? (+$('#run-tokcap').value || null) : null};
+  const btn = $('#run-start'), label = btn.textContent; btn.disabled = true;
+  if (!noai && ai.mode === 'openai') btn.textContent = 'Checking the model...';
   try { const r = await api('/api/runs', {method: 'POST', body: JSON.stringify(body)}); showRun(r.id); loadRuns(); }
-  catch (err) { banner(err.message); } finally { $('#run-start').disabled = false; }
+  catch (err) { banner(err.message); } finally { btn.disabled = false; btn.textContent = label; }
 });
 $('#run-cancel').addEventListener('click', async () => { if (currentRun && confirm('Cancel this analysis?')) await api(`/api/runs/${currentRun}/cancel`, {method: 'POST'}); });
 $('#run-new').addEventListener('click', () => { currentRun = null; history.replaceState(null, '', '/'); render(); });
@@ -129,7 +151,9 @@ function renderRun(st) {
     `<span>${elapsed(st)}</span>`,
     st.options.no_ai ? '' : st.options.engine === 'account'
       ? `<span>Claude account · API-equivalent usage $${(st.cost_usd || 0).toFixed(2)} (not billed)${tokenText(st.tokens)}</span>`
-      : `<span>est. cost $${(st.cost_usd || 0).toFixed(2)}${st.options.budget_usd ? ` of $${st.options.budget_usd} cap` : ''}${tokenText(st.tokens)}</span>`].join('');
+      : st.options.engine === 'openai'
+        ? `<span>${esc(st.options.provider_label || 'AI')}${st.options.token_cap_m ? ` · cap ${st.options.token_cap_m}M tokens` : ''}${tokenText(st.tokens)}</span>`
+        : `<span>est. cost $${(st.cost_usd || 0).toFixed(2)}${st.options.budget_usd ? ` of $${st.options.budget_usd} cap` : ''}${tokenText(st.tokens)}</span>`].join('');
   $('#stages').innerHTML = st.stages.map((s) => `<li class="s-${s.status}"><span class="ic">${ICONS[s.status] ?? ''}</span>
     <span>${esc(s.label)}</span><span class="d">${esc(s.detail)}</span></li>`).join('');
   const p = st.progress || {};
@@ -168,13 +192,21 @@ document.querySelectorAll('[data-doc]').forEach((btn) => btn.addEventListener('c
 }));
 
 // ---------------------------------------------------------------- history
+function modelText(o) {
+  if (!o) return '-';
+  if (o.no_ai || o.engine === 'none') return 'Rule-based only';
+  const m = o.model ? (MODEL_LABELS[o.model] || o.model).replace(/ \(.*\)$/, '') : '';
+  if (o.engine === 'openai') return `${o.provider_label || 'AI'}${m ? ' · ' + m : ''}`;
+  return m || (o.engine === 'account' ? 'Claude account' : 'Claude API');
+}
 async function loadRuns() {
   const runs = await api('/api/runs').catch(() => []);
   $('#runs').innerHTML = runs.length ? runs.map((r) => `<tr><td>${esc(r.created)}</td><td>${esc(r.org?.name || r.org?.alias)}</td>
     <td>${esc(r.release)}</td><td><span class="pill p-${esc(r.status)}">${esc(r.status)}</span></td>
     <td>${r.counts ? `${r.counts.High} / ${r.counts.Medium} / ${r.counts.Low}` : ''}</td>
+    <td>${esc(modelText(r.options))}</td>
     <td><a data-open="${esc(r.id)}">Open</a>${['running', 'queued'].includes(r.status) ? '' : `<a data-del="${esc(r.id)}">Delete</a>`}</td></tr>`).join('')
-    : '<tr><td colspan="6" class="muted">No analyses yet.</td></tr>';
+    : '<tr><td colspan="7" class="muted">No analyses yet.</td></tr>';
   document.querySelectorAll('[data-open]').forEach((a) => a.onclick = () => { showRun(a.dataset.open); window.scrollTo({top: $('#step-run').offsetTop - 10, behavior: 'smooth'}); });
   document.querySelectorAll('[data-del]').forEach((a) => a.onclick = async () => {
     if (!confirm('Delete this analysis and its documents? This also removes the downloaded org metadata and source code.')) return;
@@ -184,9 +216,9 @@ async function loadRuns() {
 
 // ---------------------------------------------------------------- render session
 function render() {
-  const sf = S.salesforce, cl = S.claude, up = S.upload;
+  const sf = S.salesforce, ai = S.ai, up = S.upload;
   $('#chips').innerHTML = `<span class="chip ${sf ? 'on' : ''}">Salesforce: ${sf ? esc(sf.org_name || sf.username) : 'not connected'}</span>
-    <span class="chip ${cl.configured ? 'on' : ''}">Claude: ${cl.configured ? 'key set' : 'no key'}</span>`;
+    <span class="chip ${ai.configured ? 'on' : ''}">AI: ${ai.configured ? esc(ai.label) : 'not connected'}</span>`;
   // 1
   $('#sf-login').hidden = !!sf; $('#sf-connected').hidden = !sf;
   setStep('step-sf', {done: !!sf, state: sf ? `${sf.org_name || ''}${sf.is_sandbox ? ' · sandbox' : ''}` : 'Required'});
@@ -194,28 +226,34 @@ function render() {
     ['User', `${sf.display_name || ''} (${sf.username})`], ['Instance', `${sf.instance_url} ${sf.instance_name ? '· ' + sf.instance_name : ''}`],
     ['API version', sf.api_version], ['Connected', sf.connected_at]].map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
   // 2
-  const modeLabel = cl.mode === 'account' ? 'Claude account (via Claude Code)' : 'Claude API key';
-  setStep('step-claude', {locked: !sf, done: cl.configured,
-    state: cl.configured ? `${modeLabel}${cl.source === 'environment' ? ' · from environment' : ''}` : 'Needed for AI analysis'});
-  $('#cl-connected').hidden = !cl.configured; $('#cl-choose').hidden = cl.configured;
-  $('#cl-clear').hidden = cl.source !== 'session';
-  if (cl.configured) $('#cl-info').innerHTML = [['Connected with', modeLabel],
-    ['Billing', cl.mode === 'account' ? "Counts against your Claude plan's usage limits" : 'Pay per use (API)'],
-    ['Source', cl.source === 'environment' ? 'Environment variable (.env)' : 'Entered on this page (memory only)']]
-    .map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
-  if (!cl.account_available) {
-    document.querySelector('[data-tab="account"]').disabled = true;
-    document.querySelector('[data-tab="account"]').title = 'Claude Code is not installed in this environment (it is in the Docker image)';
-    showTab('api');
+  const BILLING = {'claude-account': "Counts against your Claude plan's usage limits", claude: 'Pay per use (Claude API)',
+    openai: 'Pay per use with OpenAI', gemini: 'Pay per use with Google', other: 'Billed by the API provider',
+    local: 'No per-token charge (runs on your server)'};
+  setStep('step-claude', {locked: !sf, done: ai.configured,
+    state: ai.configured ? `${ai.label}${ai.source === 'environment' ? ' · from environment' : ''}` : 'Needed for AI analysis'});
+  $('#ai-connected').hidden = !ai.configured; $('#ai-choose').hidden = ai.configured;
+  $('#ai-clear').hidden = ai.source !== 'session';
+  if (ai.configured) $('#ai-info').innerHTML = [['Connected with', ai.label + (ai.provider === 'claude-account' ? ' (via Claude Code)' : '')],
+    ai.base_url ? ['Endpoint', ai.base_url] : null, ['Billing', BILLING[ai.provider]],
+    ['Source', ai.source === 'environment' ? 'Environment variable (.env)' : 'Entered on this page (memory only)']]
+    .filter(Boolean).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
+  const acct = document.querySelector('[data-tab="account"]');
+  if (!ai.account_available) {
+    acct.disabled = true; acct.title = 'Claude Code is not installed in this environment (it is in the Docker image)';
+    if (acct.classList.contains('on')) showTab('api');
   }
-  $('#run-budget').closest('label').hidden = cl.mode === 'account';
+  $('#budget-usd-wrap').hidden = ai.configured && ai.mode !== 'api';
+  $('#budget-tok-wrap').hidden = !(ai.mode === 'openai' && ai.provider !== 'local');
   // 3
   setStep('step-notes', {locked: !sf, done: !!up, state: up ? `${up.release} · ${up.features} features` : 'Upload PDF or Word'});
   $('#rn-info').hidden = !up;
   if (up) $('#rn-info').innerHTML = [['File', up.filename], ['Release', up.release], ['Features found', up.features],
     ['Pages', up.pages ?? '-']].map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
   // 4
-  $('#run-model').innerHTML = cl.models.map((m) => `<option value="${m}" ${m === cl.default_model ? 'selected' : ''}>${esc(MODEL_LABELS[m] || m)}</option>`).join('');
+  const prevModel = $('#run-model').value;
+  const pick = ai.models.includes(prevModel) ? prevModel : ai.default_model;
+  $('#run-model').innerHTML = (ai.mode === 'openai' && !pick ? '<option value="" selected disabled>Choose a model...</option>' : '') +
+    ai.models.map((m) => `<option value="${esc(m)}" ${m === pick ? 'selected' : ''}>${esc(MODEL_LABELS[m] || m)}</option>`).join('');
   const canRun = !!(sf && up);
   if (!currentRun) {
     $('#run-form').hidden = false; $('#run-live').hidden = true;
